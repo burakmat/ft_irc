@@ -4,8 +4,10 @@
 class Server : public Socket
 {
 	private:
-		int client_fd;
+		int last_client_fd;
 	public:
+		struct pollfd pfds[MAX_CLIENT + 1];
+	
 		Server(int port);
 		~Server();
 

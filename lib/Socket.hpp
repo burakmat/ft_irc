@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #define PORT 8080
+#define MAX_CLIENT 10
 
 
 class Socket
