@@ -5,6 +5,12 @@ int main(int ac, char **av)
 	(void)ac;
 	(void)av;
 
+	if (ac < 2)
+	{
+		std::cout << "./server <port>" << std::endl;
+		return 1;
+	}
+	
 	size_t n_byte;
 
 	Server server(atoi(av[1]));
@@ -43,9 +49,10 @@ int main(int ac, char **av)
 					server.pfds[i].events = 0;
 					--nfds;
 				} else {
-					std::cout << "Client " << i << ": " << buffer << std::endl;
+					std::cout << "Client " << i << ": " << buffer;
 				}
 				server.pfds[i].revents = 0;
+				memset(buffer, 0, sizeof(buffer));
 			}
 		}
 	}
