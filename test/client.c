@@ -237,7 +237,7 @@ int main()
 		// client.display_tty = create_tty_path(tty);
 		// pthread_create(&tid, NULL, &display_incoming_message, &client);
 		// Read user input and send it to the server
-		// while (1)
+		while (1)
 		{
 			read(0, request, 256);
 			int i = 0;
