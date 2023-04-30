@@ -1,17 +1,22 @@
 #pragma once
-#include "Socket.hpp"
+#include "User.hpp"
 
 class Server : public Socket
 {
 	private:
-		int last_client_fd;
 	public:
-		struct pollfd pfds[MAX_CLIENT + 1];
+		std::vector<struct pollfd> pfds;
+		// std::vector<User> user_list;
 	
 		Server(int port);
 		~Server();
 
 		void acception();
-		int get_client_fd() const;
-};
+		
+		void delete_fd(int index);
+		void create_fd(int fd);
+		
+		void delete_user();
+		void create_user();
 
+};

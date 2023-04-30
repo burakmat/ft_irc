@@ -8,7 +8,6 @@
 #include <fstream>
 #include <unistd.h>
 
-#define PORT 8080
 #define MAX_CLIENT 10
 
 
@@ -17,13 +16,11 @@ class Socket
 	protected:
 		struct sockaddr_in address;
 		int fd;
-		bool _fail;
 	public:
-		Socket();
 		Socket(int port);
 		~Socket();
 
-		bool fail() const;
+		void fail_check(int fail);
 		int get_fd() const;
 };
 
