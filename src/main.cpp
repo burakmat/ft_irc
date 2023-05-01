@@ -19,9 +19,10 @@ int main(int ac, char **av)
 	while (1)
 	{
 		// Third parameter (timeout) can be changed.
+
 		if (poll(&server.pfds[0], server.pfds.size(), 1000) == -1)
 			exit(1);
-		std::cout << "Listening on port " << av[1] << "." << std::endl;
+		// std::cout << "Listening on port " << av[1] << "." << std::endl;
 
 
 		if (server.pfds[0].revents & POLLIN) {
@@ -38,13 +39,13 @@ int main(int ac, char **av)
 				// server.create_user();
 
 				if (n_byte == 0) {
+					server.remove_from_all_channels(server.pfds[i].fd);
 					server.delete_fd(i);
-					server.delete_user();
+					server.delete_user(i);
 				} else {
 					std::cout << "Client " << i << ": " << buffer << std::endl;
+					server.getting_command(i, buffer);
 				}
-
-				server.getting_command(i, buffer);
 
 				server.pfds[i].revents = 0;
 			}

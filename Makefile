@@ -4,7 +4,8 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98 -I lib/
 SRCS = src/main.cpp \
 		src/Server.cpp \
 		src/Socket.cpp \
-		src/User.cpp
+		src/User.cpp \
+		src/Channel.cpp
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME) test

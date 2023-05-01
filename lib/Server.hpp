@@ -1,14 +1,19 @@
 #pragma once
 #include "User.hpp"
+#include "Channel.hpp"
 
 class Server : public Socket
 {
 	private:
 		std::string host_name;
 		std::string created_time;
+
+		bool is_nickname_unique(std::string nick) const;
+		int is_channel_active(std::string) const;
 	public:
 		std::vector<struct pollfd> pfds;
 		std::vector<User> user_list;
+		std::vector<Channel> channel_list;
 	
 		Server(int port);
 		~Server();
@@ -18,7 +23,7 @@ class Server : public Socket
 		void delete_fd(int index);
 		void create_fd(int fd);
 		
-		void delete_user();
+		void delete_user(int index);
 		void create_user(std::string user_name, std::string nick_name, std::string real_name);
 
 		void getting_command(int index, std::string msg);
@@ -27,5 +32,7 @@ class Server : public Socket
 	
 		std::string get_host_name();
 
+		void join_channel(std::string channel, int fd);
+		void remove_from_all_channels(int fd);
 };
 
