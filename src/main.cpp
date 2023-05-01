@@ -32,6 +32,7 @@ int main(int ac, char **av)
 
 			if (server.pfds[i].revents & POLLIN) {
 				char buffer[256];
+				memset(buffer, 0, sizeof(buffer));
 				n_byte = read(server.pfds[i].fd, buffer, sizeof(buffer));
 				
 				// server.create_user();
@@ -46,7 +47,6 @@ int main(int ac, char **av)
 				server.getting_command(i, buffer);
 
 				server.pfds[i].revents = 0;
-				memset(buffer, 0, sizeof(buffer));
 			}
 		}
 	}

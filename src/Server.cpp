@@ -79,12 +79,18 @@ void Server::getting_command(int index, std::string buffer){
 
 		if (array[0] == "USER")
 		{
+			// :osman 001 osman :Hi, welcome to IRC\r\n
+			// :osman 002 osman :Your host is osman, running version miniircd-2.2\r\n
+			// :osman 003 osman :This server was created sometime\r\n
+			// :osman 004 osman osman miniircd-2.2 o o\r\n
+			// :osman 251 osman :There are 1 users and 0 services on 1 server\r\n
+
 			create_user(array[6], array[1], array[4].substr(1));
-			create_msg(index, "001", user_list[index].get_user_name() + " :Hi, welcome to IRC");
-			create_msg(index, "002", user_list[index].get_user_name() + " :Your host is " + host_name + ", running version v1");
-			create_msg(index, "003", user_list[index].get_user_name() + " :This server was created " + created_time);
-			create_msg(index, "004", user_list[index].get_user_name() + " " + host_name + " v1 o o");
-			create_msg(index, "251", user_list[index].get_user_name() + " :There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server");
+			create_msg(index, "001", ":Hi, welcome to IRC");
+			create_msg(index, "002", ":Your host is " + host_name + ", running version v1");
+			create_msg(index, "003", ":This server was created " + created_time);
+			create_msg(index, "004", host_name + " v1 o o");
+			create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server");
 		}
 		else if (array[0] == "PRIVMSG"){
 			
@@ -97,9 +103,9 @@ void Server::getting_command(int index, std::string buffer){
 			// ":buraks-mbp.home 366 mat mati :End of NAMES list\r\n";
 
 			send_msg(pfds[index].fd, ":"+ user_list[index].get_user_name() + "!" + user_list[index].get_user_name() + "@" + host_name +" JOIN " + array[1] +"\r\n");
-			create_msg(index, "331", user_list[index].get_user_name() + " " + array[1] + " :No topic is set");
-			create_msg(index, "353", user_list[index].get_user_name() + " = " + array[1] + " :osman");//will change
-			create_msg(index, "366", user_list[index].get_user_name() + " " + array[1] + " :End of NAMES list");
+			create_msg(index, "331", array[1] + " :No topic is set");
+			create_msg(index, "353", "= " + array[1] + " :osman");//will change
+			create_msg(index, "366", array[1] + " :End of NAMES list");
 		}
 		else if (array[0] == "QUIT")
 		{
@@ -108,7 +114,7 @@ void Server::getting_command(int index, std::string buffer){
 }
 
 void Server::create_msg(int index, std::string code, std::string msg){
-	std::string all_msg = ":" + host_name + " " + code + " " + msg + "\r\n";	
+	std::string all_msg = ":" + host_name + " " + code + " " + user_list[index].get_user_name() + " " + msg + "\r\n";	
 
 	send_msg(pfds[index].fd, all_msg);
 }
