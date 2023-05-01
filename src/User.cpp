@@ -5,11 +5,24 @@ User::User(){
 
 }
 
-User::User(int id, std::string buffer){
-	(void)id;
-	(void)buffer;
+User::User(std::string user_name, std::string nick_name, std::string real_name){
+	this->user_name = user_name;
+	this->nick_name = nick_name;
+	this->real_name = real_name;
 }
 
 User::~User(){
 	
+}
+
+std::string User::get_user_name(){
+	return this->user_name;
+}
+
+std::string User::get_nick_name(){
+	return this->nick_name;
+}
+
+std::string User::get_real_name(){
+	return this->real_name;
 }

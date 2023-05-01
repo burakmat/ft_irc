@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <unistd.h>
 
 #define MAX_CLIENT 10
