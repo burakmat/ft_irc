@@ -1,7 +1,7 @@
 #include "Channel.hpp"
 
 Channel::Channel(std::string name)
-: name(name)
+: name(name), topic("No topic is set")
 {
 }
 
@@ -34,7 +34,7 @@ bool Channel::remove_from_channel(User user)
 	return false;
 }
 
-std::string Channel::get_channel_name() const
+std::string Channel::get_name() const
 {
 	return name;
 }

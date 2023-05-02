@@ -90,11 +90,11 @@ void Server::getting_command(int index, std::string buffer) {
 		// :osman 251 osman :There are 1 users and 0 services on 1 server\r\n
 
 		create_user(array[1], array[6], array[4].substr(1), pfds[index].fd);
-		create_msg(index, "001", ":Hi, welcome to IRC");
-		create_msg(index, "002", ":Your host is " + host_name + ", running version v1");
-		create_msg(index, "003", ":This server was created " + created_time);
-		create_msg(index, "004", host_name + " v1 o o");
-		create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server");
+		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
+		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
+		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
+		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
+		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
 	}
 	else if (array[0] == "PRIVMSG"){
 		// PRIVMSG abullah :41\r\n
@@ -103,11 +103,11 @@ void Server::getting_command(int index, std::string buffer) {
 		// :user_osman!nick_os23@127.0.0.1 PRIVMSG abdullah :61\r\n /to abdullah
 		
 		if (array[1].substr(0,1) == "#")
-			create_msg_2(pfds[index].fd, 2, array[0] + " " + array[1] + " " + array[2]);	 // send_to_channel(array[1]); will change
+			create_msg_2(pfds[index].fd, array[0] + " " + array[1] + " " + array[2]);	 // send_to_channel(array[1]); will change
 		else if (is_nickname_exist(array[1]) != -1)
 			send_to_user(index, array[0], array[1], array[2]);
 		else
-			create_msg(index, "401", array[1] + " :No such nick/channel");
+			send_msg(pfds[index].fd, create_msg(index, "401", array[1] + " :No such nick/channel"));
 
 		//channel
 		// PRIVMSG #aynen :knk\r\n
@@ -115,11 +115,11 @@ void Server::getting_command(int index, std::string buffer) {
 	}
 	else if (array[0] == "JOIN")
 	{
-		//first join message
+		//	first join message
 		// ":abdullah!abdullah@192.168.1.34 JOIN #aynen\r\n"; 
-		// ":buraks-mbp.home 331 mat mati :No topic is set\r\n";
-		// ":buraks-mbp.home 353 mat = mati :mat\r\n";
-		// ":buraks-mbp.home 366 mat mati :End of NAMES list\r\n";
+		// ":buraks-mbp.home 331 mat #mati :No topic is set\r\n";
+		// ":buraks-mbp.home 353 mat = #mati :mat\r\n";
+		// ":buraks-mbp.home 366 mat #mati :End of NAMES list\r\n";
 		// gelen kişi JOIN sonrası WHO mesaji gönderir
 
 		// channeldaki her adam için GELEN kişinin infosunu göndermek lazım 1 satır
@@ -129,11 +129,14 @@ void Server::getting_command(int index, std::string buffer) {
 		// :bmat!bmat@127.0.0.1 PART #aynen :bmat\r\n
 
 		//yanlış yapı baştan göz gezdirilmesi lazım
-		join_channel(array[1], index);
-		create_msg_2(index, 2, array[0] + " " + array[1]); // tamamen yanlış buna göre iş yapma compile geçsin diye yapıldı
-		create_msg(index, "331", array[1] + " :No topic is set"); // channelın topicini döndüren fonksiyonu çağır
-		create_msg(index, "353", "= " + array[1] + find_channel(array[1]).get_str_user_list());//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
-		create_msg(index, "366", array[1] + " :End of NAMES list");
+
+		Channel channel = join_channel(array[1], index);
+		send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1])); 
+		send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel.get_topic()));
+		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel.get_str_user_list()));//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
+		send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
+		// channel.send_message()
+
 	}
 	else if (array[0] == "TOPIC"){
 			
@@ -165,20 +168,25 @@ void Server::getting_command(int index, std::string buffer) {
 	}
 }
 
+
 void Server::send_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg){
 	int user_index = is_nickname_exist(receiver_nick_name);
-	create_msg_2(index, user_index + 1, command + " " + receiver_nick_name + " " + msg);
+	
+	std::cout << "msg: " << create_msg_2(index, command + " " + receiver_nick_name + " " + msg) << std::endl;
+	send_msg(pfds[user_index + 1].fd, create_msg_2(index, command + " " + receiver_nick_name + " " + msg));
 }
 
-void Server::create_msg(int index, std::string code, std::string msg) {
-	std::string all_msg = ":" + host_name + " " + code + " " + user_list[USER_ID].get_nick_name() + " " + msg + "\r\n";	
+std::string Server::create_msg(int index, std::string code, std::string msg) {
+	return ":" + host_name + " " + code + " " + user_list[USER_ID].get_nick_name() + " " + msg + "\r\n";	
 
-	send_msg(pfds[index].fd, all_msg);
+	// send_msg(pfds[index].fd, all_msg);
 }
 
 // :user_osman!nick_os23@127.0.0.1 PRIVMSG abdullah :61\r\n /to abdullah
-void Server::create_msg_2(int sender, int receiver, std::string msg){
-	send_msg(pfds[receiver].fd, ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n");
+std::string Server::create_msg_2(int sender, std::string msg){
+	return ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n";
+
+	// send_msg(pfds[receiver].fd, ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n");
 }
 
 void Server::send_msg(int fd, std::string msg) {
@@ -205,7 +213,7 @@ int Server::is_channel_active(std::string channel) const
 {
 	int i = 0;
 	for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it, ++i) {
-		if ((*it).get_channel_name() == channel)
+		if ((*it).get_name() == channel)
 			return i;
 	}
 	return -1;
@@ -214,7 +222,7 @@ int Server::is_channel_active(std::string channel) const
 Channel Server::find_channel(std::string name)
 {
 	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
-		if ((*it).get_channel_name() == name) {
+		if ((*it).get_name() == name) {
 			return (*it);
 		}
 	}
@@ -222,15 +230,17 @@ Channel Server::find_channel(std::string name)
 }
 
 
-void Server::join_channel(std::string channel, int index)
+Channel Server::join_channel(std::string channel, int index)
 {
 	int channel_index = is_channel_active(channel);
 	if (channel_index != -1) {
-		channel_list[channel_index].add_to_channel(user_list[index - 1]);
+		channel_list[channel_index].add_to_channel(user_list[USER_ID]);
+		return channel_list[channel_index];
 	} else {
 		Channel new_channel(channel);
-		new_channel.add_to_channel(user_list[index - 1]);
+		new_channel.add_to_channel(user_list[USER_ID]);
 		channel_list.push_back(new_channel);
+		return new_channel;
 	}
 }
 

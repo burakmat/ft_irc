@@ -27,15 +27,15 @@ class Server : public Socket
 		void create_user(std::string user_name, std::string nick_name, std::string real_name, int fd);
 
 		void getting_command(int index, std::string msg);
-		void create_msg(int index, std::string code, std::string msg);
-		void create_msg_2(int sender, int receiver, std::string msg);
+		std::string create_msg(int index, std::string code, std::string msg);
+		std::string create_msg_2(int sender, std::string msg);
 		void send_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);
 		void send_msg(int fd, std::string msg);
 	
 		std::string get_host_name();
 
 		Channel find_channel(std::string name);
-		void join_channel(std::string channel, int index);
+		Channel join_channel(std::string channel, int index);
 		void remove_from_all_channels(User user);
 };
 
