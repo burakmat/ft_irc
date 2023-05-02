@@ -8,7 +8,7 @@ class Server : public Socket
 		std::string host_name;
 		std::string created_time;
 
-		bool is_nickname_unique(std::string nick) const;
+		int is_nickname_exist(std::string nick) const;
 		int is_channel_active(std::string) const;
 	public:
 		std::vector<struct pollfd> pfds;
@@ -28,6 +28,8 @@ class Server : public Socket
 
 		void getting_command(int index, std::string msg);
 		void create_msg(int index, std::string code, std::string msg);
+		void create_msg_2(int sender, int receiver, std::string msg);
+		void send_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);
 		void send_msg(int fd, std::string msg);
 	
 		std::string get_host_name();

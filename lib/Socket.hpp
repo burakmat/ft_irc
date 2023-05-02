@@ -10,7 +10,7 @@
 #include <unistd.h>
 
 #define MAX_CLIENT 10
-
+#define USER_ID (index-1)
 
 class Socket
 {
