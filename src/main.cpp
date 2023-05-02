@@ -39,7 +39,7 @@ int main(int ac, char **av)
 				// server.create_user();
 
 				if (n_byte == 0) {
-					server.remove_from_all_channels(server.pfds[i].fd);
+					server.remove_from_all_channels(server.user_list[i - 1]);
 					server.delete_fd(i);
 					server.delete_user(i);
 				} else {

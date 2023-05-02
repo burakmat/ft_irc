@@ -1,17 +1,23 @@
 #pragma once
 #include "Socket.hpp"
+#include "User.hpp"
 
 class Channel
 {
 	private:
 		std::string name;
-		std::vector<int> fds;
+		std::vector<User> user_list;
+		std::string topic;
 	public:
 		Channel(std::string name);
 		~Channel();
 
-		bool add_to_channel(int fd);
-		bool remove_from_channel(int fd);
+		bool add_to_channel(User user);
+		bool remove_from_channel(User user);
+		
 		std::string get_channel_name() const;
-		void send_message(int sender_fd, std::string message) const;
+		void set_topic(std::string str);
+		std::string get_topic() const;
+
+		void send_message(User sender, std::string message) const;
 };

@@ -32,7 +32,7 @@ class Server : public Socket
 	
 		std::string get_host_name();
 
-		void join_channel(std::string channel, int fd);
-		void remove_from_all_channels(int fd);
+		void join_channel(std::string channel, int index);
+		void remove_from_all_channels(User user);
 };
 

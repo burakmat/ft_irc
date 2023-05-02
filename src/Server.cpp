@@ -106,7 +106,7 @@ void Server::getting_command(int index, std::string buffer) {
 		// ":buraks-mbp.home 353 mat = mati :mat\r\n";
 		// ":buraks-mbp.home 366 mat mati :End of NAMES list\r\n";
 
-		join_channel(array[1], pfds[index].fd);
+		join_channel(array[1], index);
 
 		send_msg(pfds[index].fd, ":"+ user_list[index].get_user_name() + "!" + user_list[index].get_user_name() + "@" + host_name +" JOIN " + array[1] +"\r\n");
 		create_msg(index, "331", array[1] + " :No topic is set");
@@ -165,21 +165,21 @@ int Server::is_channel_active(std::string channel) const
 	return -1;
 }
 
-void Server::join_channel(std::string channel, int fd)
+void Server::join_channel(std::string channel, int index)
 {
 	int channel_index = is_channel_active(channel);
 	if (channel_index != -1) {
-		channel_list[channel_index].add_to_channel(fd);
+		channel_list[channel_index].add_to_channel(user_list[index - 1]);
 	} else {
 		Channel new_channel(channel);
-		new_channel.add_to_channel(fd);
+		new_channel.add_to_channel(user_list[index - 1]);
 		channel_list.push_back(new_channel);
 	}
 }
 
-void Server::remove_from_all_channels(int fd)
+void Server::remove_from_all_channels(User user)
 {
 	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
-		(*it).remove_from_channel(fd);
+		(*it).remove_from_channel(user);
 	}
 }

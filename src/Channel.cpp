@@ -9,24 +9,29 @@ Channel::~Channel()
 {
 }
 
-// Returns false if given fd is already in the channel
-bool Channel::add_to_channel(int fd)
+// Returns false if given user is already in the channel
+bool Channel::add_to_channel(User user)
 {
-	if (std::find(fds.begin(), fds.end(), fd) != fds.end()) {
-		fds.push_back(fd);
-		return true;
+	for (std::vector<User>::iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if ((*it).get_nick_name() == user.get_nick_name()) {
+			return false;
+		}
 	}
-	return false;
+	user_list.push_back(user);
+	return true;
+
 }
 
-// Returns false if given fd is not in the channel
-bool Channel::remove_from_channel(int fd)
+// Returns false if given user is not in the channel
+bool Channel::remove_from_channel(User user)
 {
-	std::vector<int>::iterator it = std::find(fds.begin(), fds.end(), fd);
-	if (it == fds.end())
-		return false;
-	fds.erase(it);
-	return true;
+	for (std::vector<User>::iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if (user.get_nick_name() == (*it).get_nick_name()) {
+			user_list.erase(it);
+			return true;
+		}
+	}
+	return false;
 }
 
 std::string Channel::get_channel_name() const
@@ -34,12 +39,20 @@ std::string Channel::get_channel_name() const
 	return name;
 }
 
-// Does server send the message to sender???
-void Channel::send_message(int sender_fd, std::string message) const
+void Channel::set_topic(std::string str)
 {
-	for (std::vector<int>::const_iterator it = fds.begin(); it != fds.end(); ++it) {
-		if (*it != sender_fd) {
-			write(*it, message.c_str(), message.length());
+	topic = str;
+}
+std::string Channel::get_topic() const {
+	return topic;
+}
+
+// Does server send the message to sender???
+void Channel::send_message(User sender, std::string message) const
+{
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if ((*it).get_fd() != sender.get_fd()) {
+			write((*it).get_fd(), message.c_str(), message.length());
 		}
 	}
 }
