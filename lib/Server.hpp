@@ -29,7 +29,7 @@ class Server : public Socket
 		void getting_command(int index, std::string msg);
 		std::string create_msg(int index, std::string code, std::string msg);
 		std::string create_msg_2(int index, std::string msg);
-		void send_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);
+		void user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);
 		void send_msg(int fd, std::string msg);
 	
 		std::string get_host_name();

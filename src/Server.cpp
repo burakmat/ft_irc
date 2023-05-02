@@ -69,24 +69,12 @@ void Server::getting_command(int index, std::string buffer) {
     std::stringstream ss(buffer);
 
     std::string word;
-	std::string content = "";
-	int i = 0;
     while (ss >> word) {
-        if (i == 0 || word[0] != ':') {
 			array.push_back(word);
-		} else {
-			content += word;
-			break ;
-		}
-		++i;
     }
-	while (ss >> word) {
-		content += word;
-	}
-	array.push_back(content);
 
 
-
+	int i = 0;
 	// std::cout << "start of vector" << std::endl;
 	i = 0;
 	for (std::vector<std::string>::iterator it = array.begin(); it != array.end(); ++it) {
@@ -111,21 +99,24 @@ void Server::getting_command(int index, std::string buffer) {
 		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
 	}
 	else if (array[0] == "PRIVMSG"){
+		// user
 		// PRIVMSG abullah :41\r\n
 		// :osman 401 user_osman abullah :No such nick/channel\r\n
 		// PRIVMSG abdullah :61\r\n
 		// :user_osman!nick_os23@127.0.0.1 PRIVMSG abdullah :61\r\n /to abdullah
 		
-		if (array[1].substr(0,1) == "#")
-			create_msg_2(pfds[index].fd, array[0] + " " + array[1] + " " + array[2]);	 // send_to_channel(array[1]); will change
-		else if (is_nickname_exist(array[1]) != -1)
-			send_to_user(index, array[0], array[1], array[2]);
+		// channel
+		// PRIVMSG #aynen :sdadsa\r\n 
+		// :abdullah!abdullah@127.0.0.1 PRIVMSG #aynen :sdadsa\r\n' to other user
+		// :abdullah!abdullah@127.0.0.1 PRIVMSG #aynen :sdadsa\r\n to other user
+
+		if (array[1].substr(0,1) == "#") //channel-user
+			find_channel(array[1]).send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1] + " " + array[2]));
+		else if (is_nickname_exist(array[1]) != -1) //user-user
+			user_to_user(index, array[0], array[1], array[2]);
 		else
 			send_msg(pfds[index].fd, create_msg(index, "401", array[1] + " :No such nick/channel"));
 
-		//channel
-		// PRIVMSG #aynen :knk\r\n
-		// :abdullah!abdullah@127.0.0.1 PRIVMSG #aynen :knk\r\n
 	}
 	else if (array[0] == "JOIN")
 	{
@@ -194,7 +185,7 @@ void Server::getting_command(int index, std::string buffer) {
 }
 
 
-void Server::send_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg){
+void Server::user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg){
 	int user_index = is_nickname_exist(receiver_nick_name);
 	
 	std::cout << "msg: " << create_msg_2(index, command + " " + receiver_nick_name + " " + msg) << std::endl;
