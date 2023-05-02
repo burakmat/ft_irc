@@ -147,7 +147,11 @@ void Server::getting_command(int index, std::string buffer) {
 		channel.send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]));
 	}
 	else if (array[0] == "TOPIC"){
-			
+		Channel channel = find_channel(array[1]);
+		channel.set_topic(array[2].substr(1));
+		std::string message = create_msg_2(index, "TOPIC " + array[1] + " " + array[2]);
+		channel.send_message(user_list[USER_ID], message);
+		write(user_list[USER_ID].get_fd(), message.c_str(), message.length());
 	}
 	else if (array[0] == "ISON"){
 			
