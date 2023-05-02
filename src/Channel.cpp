@@ -39,6 +39,11 @@ std::string Channel::get_name() const
 	return name;
 }
 
+std::vector<User> Channel::get_user_list() const
+{
+	return user_list;
+}
+
 void Channel::set_topic(std::string str)
 {
 	topic = str;

@@ -139,18 +139,12 @@ void Server::getting_command(int index, std::string buffer) {
 		// channeldaki her adam için GELEN kişinin infosunu göndermek lazım 1 satır
 		// ":abdullah!abdullah@192.168.1.34 JOIN #aynen\r\n"; to everyone
 
-		// channeldaki her adam için ÇIKAN kişinin infosunu göndermek lazım 1 satır
-		// :bmat!bmat@127.0.0.1 PART #aynen :bmat\r\n
-
-		//yanlış yapı baştan göz gezdirilmesi lazım
-
 		Channel channel = join_channel(array[1], index);
 		send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1])); 
 		send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel.get_topic()));
-		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel.get_str_user_list()));//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
+		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel.get_str_user_list()));
 		send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
-		// channel.send_message()
-
+		channel.send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]));
 	}
 	else if (array[0] == "TOPIC"){
 			
@@ -163,11 +157,20 @@ void Server::getting_command(int index, std::string buffer) {
 			//sadece o an giren kişiye yollanır diğerlerine özel tek satırlık Join mesajı yollanır
 
 			// nick_osman tek başına odaya girdikten sonra gönderilecek kod parçası
-			// :osman 352 nick_osman #aynen user_os23 127.0.0.1 osman nick_osman H :0 real_osyalcin\r\n:osman 315 nick_osman #aynen :End of WHO list\r\n
+			// :osman 352 nick_osman #aynen user_os23 127.0.0.1 osman nick_osman H :0 real_osyalcin\r\n
+			// :osman 315 nick_osman #aynen :End of WHO list\r\n
 
-			//odada nick_osman varken bmat odaya girdikten sonra gönderilecek kod parçası
-			// :osman 352 bmat #aynen user_os23 127.0.0.1 osman nick_osman H :0 real_osyalcin\r\n:osman 352 bmat #aynen bmat 127.0.0.1 osman bmat H :0 bmat\r\n:osman 315 bmat #aynen :End of WHO list\r\n
-			
+			//odada nick_osman varken abdullah odaya girdikten sonra gönderilecek kod parçası
+			// :osman 352 abdullah #aynen user_os23 127.0.0.1 osman nick_osman H :0 real_osyalcin\r\n 
+			// :osman 352 abdullah #aynen abdullah 127.0.0.1 osman abdullah H :0 abdullah\r\n
+			// :osman 315 abdullah #aynen :End of WHO list\r\n
+
+			Channel channel = find_channel(array[1]);
+		 	std::vector<User> channels_user = channel.get_user_list();
+			for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it) {
+				send_msg(pfds[index].fd, create_msg(index, "352", (*it).get_user_name() + " " + host_name + " " + host_name + " " + (*it).get_nick_name() + " H :0 " + (*it).get_real_name())); //H AND :0 could change
+			}
+			send_msg(pfds[index].fd, create_msg(index, "315", array[1] + " :End of WHO list"));
 	}
 	else if (array[0] == "PING"){ //MAYBE
 			
@@ -175,6 +178,10 @@ void Server::getting_command(int index, std::string buffer) {
 	else if (array[0] == "PART"){
 		// :<nick_name>!<user_name>@<host_name> PART #<channel_name> :<nick_name>\r\n
 		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n
+
+		// channeldaki her adam için ÇIKAN kişinin infosunu göndermek lazım 1 satır
+		// :bmat!bmat@127.0.0.1 PART #aynen :bmat\r\n	
+
 	}
 	else if (array[0] == "QUIT")
 	{
@@ -197,8 +204,8 @@ std::string Server::create_msg(int index, std::string code, std::string msg) {
 }
 
 // :user_osman!nick_os23@127.0.0.1 PRIVMSG abdullah :61\r\n /to abdullah
-std::string Server::create_msg_2(int sender, std::string msg){
-	return ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n";
+std::string Server::create_msg_2(int index, std::string msg){ //index = sender
+	return ":"+ user_list[USER_ID].get_nick_name() + "!" + user_list[USER_ID].get_user_name() + "@" + host_name + " " + msg + "\r\n";
 
 	// send_msg(pfds[receiver].fd, ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n");
 }
