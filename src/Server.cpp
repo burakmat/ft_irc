@@ -180,7 +180,9 @@ void Server::getting_command(int index, std::string buffer) {
 	}
 	else if (array[0] == "QUIT")
 	{
-		/* code */
+		remove_from_all_channels(user_list[USER_ID]);
+		delete_fd(index);
+		delete_user(index);
 	}
 }
 
