@@ -34,6 +34,7 @@ class Server : public Socket
 	
 		std::string get_host_name();
 
+		Channel find_channel(std::string name);
 		void join_channel(std::string channel, int index);
 		void remove_from_all_channels(User user);
 };

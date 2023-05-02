@@ -132,7 +132,7 @@ void Server::getting_command(int index, std::string buffer) {
 		join_channel(array[1], index);
 		create_msg_2(index, 2, array[0] + " " + array[1]); // tamamen yanlış buna göre iş yapma compile geçsin diye yapıldı
 		create_msg(index, "331", array[1] + " :No topic is set"); // channelın topicini döndüren fonksiyonu çağır
-		create_msg(index, "353", "= " + array[1] + " :osman");//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
+		create_msg(index, "353", "= " + array[1] + find_channel(array[1]).get_str_user_list());//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
 		create_msg(index, "366", array[1] + " :End of NAMES list");
 	}
 	else if (array[0] == "TOPIC"){
@@ -210,6 +210,17 @@ int Server::is_channel_active(std::string channel) const
 	}
 	return -1;
 }
+
+Channel Server::find_channel(std::string name)
+{
+	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
+		if ((*it).get_channel_name() == name) {
+			return (*it);
+		}
+	}
+	throw std::exception();
+}
+
 
 void Server::join_channel(std::string channel, int index)
 {
