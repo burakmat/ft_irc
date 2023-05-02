@@ -5,11 +5,13 @@ Server::Server(int port) : Socket::Socket(port)
 	fail_check(bind(fd, (struct sockaddr *)&address, sizeof(address)));
 	fail_check(listen(fd, MAX_CLIENT));
 	create_fd(fd);
+
+	//host_name
 	char tmp[255];
 	gethostname(tmp, 255);
 	host_name = tmp;
 
-
+	//time
 	time_t rawtime;
 	struct tm *timeinfo;
 	char buffer[80];
@@ -43,8 +45,7 @@ void Server::create_user(std::string user_name, std::string nick_name, std::stri
 }
 
 void Server::delete_user(int index) {
-	// send quit message
-	user_list.erase(user_list.begin() + index);
+		user_list.erase(user_list.begin() + index - 1);
 }
 
 void Server::create_fd(int fd) {
@@ -91,7 +92,6 @@ void Server::getting_command(int index, std::string buffer) {
 		// :osman 251 osman :There are 1 users and 0 services on 1 server\r\n
 
 		create_user(array[6], array[1], array[4].substr(1));
-		std::cout << array[6] << " " << array[1] << " " << array[4].substr(1) << std::endl;
 		create_msg(index, "001", ":Hi, welcome to IRC");
 		create_msg(index, "002", ":Your host is " + host_name + ", running version v1");
 		create_msg(index, "003", ":This server was created " + created_time);
