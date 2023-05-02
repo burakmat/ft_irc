@@ -131,6 +131,8 @@ void Server::getting_command(int index, std::string buffer) {
 		// ":abdullah!abdullah@192.168.1.34 JOIN #aynen\r\n"; to everyone
 
 		Channel channel = join_channel(array[1], index);
+		// if (!channel.add_to_channel(user_list[USER_ID]))
+		// 	return ;
 		send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1])); 
 		send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel.get_topic()));
 		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel.get_str_user_list()));
@@ -171,15 +173,22 @@ void Server::getting_command(int index, std::string buffer) {
 			
 	}
 	else if (array[0] == "PART"){
-		// :<nick_name>!<user_name>@<host_name> PART #<channel_name> :<nick_name>\r\n
-		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n
+		// PART #aynen\r\n'
+		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n'
+		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n'
+		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n'
 
-		// channeldaki her adam için ÇIKAN kişinin infosunu göndermek lazım 1 satır
-		// :bmat!bmat@127.0.0.1 PART #aynen :bmat\r\n	
+		Channel channel = find_channel(array[1]);
+		std::vector<User> channels_user = channel.get_user_list();
+		for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it) {
+			send_msg((*it).get_fd(), create_msg_2(index, array[0] + " " + array[1] + " :" + user_list[USER_ID].get_nick_name()));
+		}
 
 	}
 	else if (array[0] == "QUIT")
 	{
+		// send to all user
+		// nick_osman!user_os23@127.0.0.1 QUIT :Leaving.\r\n
 		remove_from_all_channels(user_list[USER_ID]);
 		delete_fd(index);
 		delete_user(index);

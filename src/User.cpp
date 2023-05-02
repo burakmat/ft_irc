@@ -13,7 +13,6 @@ User::User(std::string user_name, std::string nick_name, std::string real_name, 
 }
 
 User::~User() {
-	std::cout << "User destructor called" << std::endl;
 }
 
 std::string User::get_user_name() const {
