@@ -268,3 +268,17 @@ void Server::remove_from_all_channels(User user)
 		(*it).remove_from_channel(user);
 	}
 }
+
+// DEBUG
+void Server::print_info() const {
+	int i = 0;
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		std::cout << "User " << i << ": " << (*it).get_nick_name() << ", fd in its class: " << (*it).get_fd() << std::endl;
+		++i;
+	}
+	i = 0;
+	for (std::vector<struct pollfd>::const_iterator it = pfds.begin(); it != pfds.end(); ++it) {
+		std::cout << "Server fd " << i << ": " << (*it).fd << std::endl;
+		++i;
+	}
+}
