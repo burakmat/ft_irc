@@ -69,12 +69,26 @@ void Server::getting_command(int index, std::string buffer) {
     std::stringstream ss(buffer);
 
     std::string word;
+	std::string content = "";
+	int i = 0;
     while (ss >> word) {
-        array.push_back(word);
+        if (i == 0 || word[0] != ':') {
+			array.push_back(word);
+		} else {
+			content += word;
+			break ;
+		}
+		++i;
     }
+	while (ss >> word) {
+		content += word;
+	}
+	array.push_back(content);
+
+
 
 	// std::cout << "start of vector" << std::endl;
-	int i = 0;
+	i = 0;
 	for (std::vector<std::string>::iterator it = array.begin(); it != array.end(); ++it) {
 		std::cout << "i:" << i << ", value: " << *it << std::endl;
 		i++;
