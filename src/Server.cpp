@@ -35,9 +35,9 @@ void Server::acception()
 	create_fd(client_fd);
 }
 
-void Server::create_user(std::string user_name, std::string nick_name, std::string real_name){
+void Server::create_user(std::string user_name, std::string nick_name, std::string real_name, int fd){
 	if (is_nickname_unique(nick_name)) {
-		User new_user(user_name, nick_name, real_name);
+		User new_user(user_name, nick_name, real_name, fd);
 		user_list.push_back(new_user);
 	} else {
 		// send error code
@@ -45,7 +45,7 @@ void Server::create_user(std::string user_name, std::string nick_name, std::stri
 }
 
 void Server::delete_user(int index) {
-		user_list.erase(user_list.begin() + index - 1);
+		user_list.erase(user_list.begin() + (index - 1));
 }
 
 void Server::create_fd(int fd) {
@@ -81,8 +81,6 @@ void Server::getting_command(int index, std::string buffer) {
     }
 	// std::cout << "end of vector" << std::endl;
 
-
-
 	if (array[0] == "USER")
 	{
 		// :osman 001 osman :Hi, welcome to IRC\r\n
@@ -91,7 +89,7 @@ void Server::getting_command(int index, std::string buffer) {
 		// :osman 004 osman osman miniircd-2.2 o o\r\n
 		// :osman 251 osman :There are 1 users and 0 services on 1 server\r\n
 
-		create_user(array[6], array[1], array[4].substr(1));
+		create_user(array[6], array[1], array[4].substr(1), pfds[index].fd);
 		create_msg(index, "001", ":Hi, welcome to IRC");
 		create_msg(index, "002", ":Your host is " + host_name + ", running version v1");
 		create_msg(index, "003", ":This server was created " + created_time);
@@ -99,7 +97,7 @@ void Server::getting_command(int index, std::string buffer) {
 		create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server");
 	}
 	else if (array[0] == "PRIVMSG"){
-			
+
 	}
 	else if (array[0] == "JOIN")
 	{
@@ -112,8 +110,20 @@ void Server::getting_command(int index, std::string buffer) {
 
 		send_msg(pfds[index].fd, ":"+ user_list[index].get_user_name() + "!" + user_list[index].get_user_name() + "@" + host_name +" JOIN " + array[1] +"\r\n");
 		create_msg(index, "331", array[1] + " :No topic is set");
-		create_msg(index, "353", "= " + array[1] + " :osman");//will change
+		create_msg(index, "353", "= " + array[1] + " :osman");//channelı name (array[1]) ile bulan fonksiyondan dönen channel objesinin tüm kullanıcıların ismini döndüren (arasında boşluk olacak şekilde) fonskiyonun çağır
 		create_msg(index, "366", array[1] + " :End of NAMES list");
+	}
+	else if (array[0] == "TOPIC"){
+			
+	}
+	else if (array[0] == "ISON"){
+			
+	}
+	else if (array[0] == "WHO"){
+			
+	}
+	else if (array[0] == "PING"){ //MAYBE
+			
 	}
 	else if (array[0] == "QUIT")
 	{

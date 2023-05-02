@@ -24,7 +24,7 @@ class Server : public Socket
 		void create_fd(int fd);
 		
 		void delete_user(int index);
-		void create_user(std::string user_name, std::string nick_name, std::string real_name);
+		void create_user(std::string user_name, std::string nick_name, std::string real_name, int fd);
 
 		void getting_command(int index, std::string msg);
 		void create_msg(int index, std::string code, std::string msg);
