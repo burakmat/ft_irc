@@ -7,6 +7,8 @@ password(_password)
 	fail_check(bind(fd, (struct sockaddr *)&address, sizeof(address)));
 	fail_check(listen(fd, MAX_CLIENT));
 	create_fd(fd);
+	set_host_name();
+	set_time();
 }
 
 Server::~Server(){}
@@ -52,7 +54,26 @@ void Server::getting_command(int index, std::string buffer) {
 		}
 		send_msg(pfds[index].fd, create_msg(index, "323", ":End of LIST"));
 	}
-	
+	else if (array[0] == "PING")
+	{
+		// :osman PONG osman :1683141683\r\n'
+		send_msg(pfds[index].fd, ":" + get_host_name() + " PONG " + get_host_name() + " :" + array[1] + "\r\n");
+	}
+	else if (array[0] == "NAMES")
+	{
+		// [127.0.0.1:58265] -> b'NAMES #aynen\r\n'
+		// [127.0.0.1:58265] <- b':osman 353 abdullah = #aynen :abdullah nick_osman\r\n
+		// :osman 366 abdullah #aynen :End of NAMES list\r\n'
+
+		int channel_index = is_channel_active(array[1]);
+		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
+		send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
+	}
+	else if (array[0] == "INVITE"){
+		// 'INVITE bmat #aynen\r\n'
+		// :servername 341 osman bmat #aynen\r\n /success
+		send_msg(pfds[index].fd, create_msg(index, "341", array[1] + " " + array[2]));
+	}
 	else if (array[0] == "MODE"){
 		// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
 		//  a - user is flagged as away;
@@ -72,8 +93,8 @@ void Server::getting_command(int index, std::string buffer) {
 		// a - toggle the anonymous channel flag;
 		// i - toggle the invite-only channel flag;
 		// m - toggle the moderated channel;
-		// n - toggle the no messages to channel from clients on the
-		// 		outside;
+		// n - toggle the no messages to channel from clients on the outside;
+		
 		// q - toggle the quiet channel flag;
 		// p - toggle the private channel flag;
 		// s - toggle the secret channel flag;
@@ -85,8 +106,7 @@ void Server::getting_command(int index, std::string buffer) {
 
 		// b - set/remove ban mask to keep users out;
 		// e - set/remove an exception mask to override a ban mask;
-		// I - set/remove an invitation mask to automatically override
-		// 		the invite-only flag;
+		// I - set/remove an invitation mask to automatically override the invite-only flag;
 	}
 	else 
 		send_msg(pfds[index].fd, create_msg(index, "421", array[0] + " :Unknown command"));
@@ -131,7 +151,6 @@ std::vector<std::string> Server::parse(std::string input) {
 void Server::user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg){
 	int user_index = is_nickname_exist(receiver_nick_name);
 	
-	std::cout << "msg: " << create_msg_2(index, command + " " + receiver_nick_name + " " + msg) << std::endl;
 	send_msg(pfds[user_index + 1].fd, create_msg_2(index, command + " " + receiver_nick_name + " " + msg));
 }
 
