@@ -12,14 +12,9 @@ Channel::~Channel()
 // Returns false if given user is already in the channel
 bool Channel::add_to_channel(User user)
 {
-	for (std::vector<User>::iterator it = user_list.begin(); it != user_list.end(); ++it) {
-		if ((*it).get_nick_name() == user.get_nick_name()) {
-			return false;
-		}
-	}
-	user_list.push_back(user);
+	if (!user_exists(user))
+		user_list.push_back(user);
 	return true;
-
 }
 
 // Returns false if given user is not in the channel

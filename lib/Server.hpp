@@ -9,7 +9,7 @@ class Server : public Socket
 		std::string created_time;
 
 		int is_nickname_exist(std::string nick) const;
-		int is_channel_active(std::string) const;
+		int is_channel_active(std::string);
 	public:
 		std::vector<struct pollfd> pfds;
 		std::vector<User> user_list;
@@ -34,8 +34,7 @@ class Server : public Socket
 	
 		std::string get_host_name();
 
-		Channel find_channel(std::string name);
-		Channel join_channel(std::string channel, int index);
+		Channel &find_channel(std::string name);
 		void remove_from_all_channels(User user, int index);
 
 		// DEBUG

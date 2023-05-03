@@ -130,14 +130,15 @@ void Server::getting_command(int index, std::string buffer) {
 		// channeldaki her adam için GELEN kişinin infosunu göndermek lazım 1 satır
 		// ":abdullah!abdullah@192.168.1.34 JOIN #aynen\r\n"; to everyone
 
-		Channel channel = join_channel(array[1], index);
-		// if (!channel.add_to_channel(user_list[USER_ID]))
-		// 	return ;
+		int channel_index = is_channel_active(array[1]);
+		if (channel_list[channel_index].user_exists(user_list[USER_ID]))
+			return ;
+		channel_list[channel_index].add_to_channel(user_list[USER_ID]);
 		send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1])); 
-		send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel.get_topic()));
-		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel.get_str_user_list()));
+		send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel_list[channel_index].get_topic()));
+		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
 		send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
-		channel.send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]));
+		channel_list[channel_index].send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]));
 	}
 	else if (array[0] == "TOPIC"){
 		Channel channel = find_channel(array[1]);
@@ -178,12 +179,11 @@ void Server::getting_command(int index, std::string buffer) {
 		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n'
 		// :nick_osman!user_os23@127.0.0.1 PART #aynen :nick_osman\r\n'
 
-		Channel channel = find_channel(array[1]);
-		std::vector<User> channels_user = channel.get_user_list();
+		find_channel(array[1]).remove_from_channel(user_list[USER_ID]);
+		std::vector<User> channels_user = find_channel(array[1]).get_user_list();
 		for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it) {
 			send_msg((*it).get_fd(), create_msg_2(index, array[0] + " " + array[1] + " :" + user_list[USER_ID].get_nick_name()));
 		}
-
 	}
 	else if (array[0] == "QUIT")
 	{
@@ -205,18 +205,14 @@ void Server::user_to_user(int index, std::string command, std::string receiver_n
 
 std::string Server::create_msg(int index, std::string code, std::string msg) {
 	return ":" + host_name + " " + code + " " + user_list[USER_ID].get_nick_name() + " " + msg + "\r\n";	
-
-	// send_msg(pfds[index].fd, all_msg);
 }
 
-// :user_osman!nick_os23@127.0.0.1 PRIVMSG abdullah :61\r\n /to abdullah
 std::string Server::create_msg_2(int index, std::string msg){ //index = sender
 	return ":"+ user_list[USER_ID].get_nick_name() + "!" + user_list[USER_ID].get_user_name() + "@" + host_name + " " + msg + "\r\n";
-
-	// send_msg(pfds[receiver].fd, ":"+ user_list[sender - 1].get_nick_name() + "!" + user_list[sender - 1].get_user_name() + "@" + host_name + " " + msg + "\r\n");
 }
 
 void Server::send_msg(int fd, std::string msg) {
+	std::cout << "sending back: " << msg ;
 	write(fd, msg.c_str(), msg.length());
 }
 
@@ -235,18 +231,19 @@ int Server::is_nickname_exist(std::string nick) const
 	return -1;
 }
 
-// Returns the index of the channel if it exists, -1 otherwise
-int Server::is_channel_active(std::string channel) const
+int Server::is_channel_active(std::string channel)
 {
 	int i = 0;
 	for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it, ++i) {
 		if ((*it).get_name() == channel)
 			return i;
 	}
-	return -1;
+	Channel new_channel(channel);
+	channel_list.push_back(new_channel);
+	return i;
 }
 
-Channel Server::find_channel(std::string name)
+Channel &Server::find_channel(std::string name)
 {
 	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
 		if ((*it).get_name() == name) {
@@ -254,21 +251,6 @@ Channel Server::find_channel(std::string name)
 		}
 	}
 	throw std::exception();
-}
-
-
-Channel Server::join_channel(std::string channel, int index)
-{
-	int channel_index = is_channel_active(channel);
-	if (channel_index != -1) {
-		channel_list[channel_index].add_to_channel(user_list[USER_ID]);
-		return channel_list[channel_index];
-	} else {
-		Channel new_channel(channel);
-		new_channel.add_to_channel(user_list[USER_ID]);
-		channel_list.push_back(new_channel);
-		return new_channel;
-	}
 }
 
 void Server::remove_from_all_channels(User user, int index)

@@ -22,8 +22,6 @@ int main(int ac, char **av)
 
 		if (poll(&server.pfds[0], server.pfds.size(), 1000) == -1)
 			exit(1);
-		// std::cout << "Listening on port " << av[1] << "." << std::endl;
-
 
 		if (server.pfds[0].revents & POLLIN) {
 			server.acception();
@@ -36,14 +34,12 @@ int main(int ac, char **av)
 				memset(buffer, 0, sizeof(buffer));
 				n_byte = read(server.pfds[i].fd, buffer, sizeof(buffer));
 				
-				// server.create_user();
-
 				if (n_byte == 0) {
 					server.remove_from_all_channels(server.user_list[i - 1], i);
 					server.delete_fd(i);
 					server.delete_user(i);
 				} else {
-					std::cout << "Client " << i << ": " << buffer << std::endl;
+					std::cout  << "--------------------" << std::endl << "Client " << i << ": " << buffer << std::endl;
 					server.getting_command(i, buffer);
 				}
 
@@ -52,9 +48,3 @@ int main(int ac, char **av)
 		}
 	}
 }
-
-//PRVMSG
-//JOIN
-//QUIT
-//MODE (MAYBE)
-//
