@@ -35,9 +35,11 @@ int main(int ac, char **av)
 				n_byte = read(server.pfds[i].fd, buffer, sizeof(buffer));
 				
 				if (n_byte == 0) {
-					server.remove_from_all_channels(server.user_list[i - 1], i);
+					if (server.pfds.size() - 1 == server.user_list.size()) {
+						server.remove_from_all_channels(server.user_list[i - 1], i);
+						server.delete_user(i);
+					}
 					server.delete_fd(i);
-					server.delete_user(i);
 				} else {
 					std::cout  << "--------------------" << std::endl << "Client " << i << ": " << buffer << std::endl;
 					server.getting_command(i, buffer);

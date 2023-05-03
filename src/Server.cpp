@@ -211,6 +211,14 @@ std::vector<std::string> Server::parse(std::string input) {
 			result.push_back(temp);
 		}
 	} else {
+		if (input.find_last_of(':') == std::string::npos) {
+			ss.str(input);
+			ss.clear();
+			while (ss >> temp) {
+				result.push_back(temp);
+			}
+			return result;
+		}
 		temp = input.substr(0, input.find_last_of(':'));
 		ss.str(temp);
 		ss.clear();
