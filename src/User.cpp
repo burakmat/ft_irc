@@ -2,18 +2,11 @@
 
 
 User::User(int _fd)
-: user_name(""),
+: fd(_fd),
+user_name(""),
 nick_name(""),
-real_name(""),
-fd(_fd)
+real_name("")
 {}
-
-User::User(std::string user_name, std::string nick_name, std::string real_name, int fd) {
-	this->user_name = user_name;
-	this->nick_name = nick_name;
-	this->real_name = real_name;
-	this->fd = fd;
-}
 
 User::~User() {
 }
