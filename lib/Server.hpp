@@ -7,6 +7,7 @@ class Server : public Socket
 	private:
 		std::string host_name;
 		std::string created_time;
+		std::string password;
 
 		int is_nickname_exist(std::string nick) const;
 		int is_channel_active(std::string);
@@ -23,7 +24,7 @@ class Server : public Socket
 		std::vector<User> user_list;
 		std::vector<Channel> channel_list;
 	
-		Server(int port);
+		Server(int port, std::string _password);
 		~Server();
 
 		void acception();
@@ -44,7 +45,7 @@ class Server : public Socket
 		void create_fd(int fd);
 		
 		void delete_user(int index);
-		void create_user(std::string user_name, std::string nick_name, std::string real_name, int fd);
+		void create_user(std::string user_name, std::string nick_name, std::string real_name, int index);
 
 		//GETTER
 		std::string get_host_name();

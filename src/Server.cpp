@@ -1,6 +1,8 @@
 #include "Server.hpp"
 
-Server::Server(int port) : Socket::Socket(port)
+Server::Server(int port, std::string _password) : 
+Socket::Socket(port),
+password(_password)
 {
 	fail_check(bind(fd, (struct sockaddr *)&address, sizeof(address)));
 	fail_check(listen(fd, MAX_CLIENT));
@@ -13,6 +15,8 @@ void Server::acception(){
 	int client_fd = accept(fd, 0, 0);
 	fail_check(client_fd);
 	create_fd(client_fd);
+	User new_user(client_fd);
+	user_list.push_back(new_user);
 }
 
 void Server::getting_command(int index, std::string buffer) {
@@ -26,7 +30,8 @@ void Server::getting_command(int index, std::string buffer) {
 		i++;
 	}
 
-	if (array[0] == "USER")
+	// if (array[0] == "USER")
+	if (array[0] == "PASS")
 		command_user(index, array);
 	else if (array[0] == "PRIVMSG" || array[0] == "NOTICE")
 		command_privmsg(index, array);
@@ -190,13 +195,15 @@ void Server::remove_from_all_channels(User user, int index)
 
 
 // PRIVATE FUNCTIONS
-void Server::command_user(int index, std::vector<std::string> array){
-	create_user(array[1], array[6], array[4].substr(1), pfds[index].fd);
-	send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
-	send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
-	send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
-	send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
-	send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
+void Server::command_user(int index, std::vector<std::string> array) {
+	if (array[1] == password) {
+		create_user(array[3], array[8], array[6].substr(1), index);
+		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
+		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
+		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
+		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
+		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
+	}
 }
 
 void Server::command_privmsg(int index, std::vector<std::string> array){
@@ -255,10 +262,12 @@ void Server::command_quit(int index){
 
 
 // USER/FD CREATE/DELETE
-void Server::create_user(std::string user_name, std::string nick_name, std::string real_name, int fd){
+void Server::create_user(std::string user_name, std::string nick_name, std::string real_name, int index) {
+
 	if (is_nickname_exist(nick_name) == -1) {
-		User new_user(user_name, nick_name, real_name, fd);
-		user_list.push_back(new_user);
+		user_list[USER_ID].set_names(user_name, nick_name, real_name);
+		// User new_user(user_name, nick_name, real_name, fd);
+		// user_list.push_back(new_user);
 	} else {
 		// send error code
 	}
