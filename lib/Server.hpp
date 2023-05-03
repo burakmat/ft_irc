@@ -27,6 +27,7 @@ class Server : public Socket
 		void create_user(std::string user_name, std::string nick_name, std::string real_name, int fd);
 
 		void getting_command(int index, std::string msg);
+		std::vector<std::string> parse(std::string input);
 		std::string create_msg(int index, std::string code, std::string msg);
 		std::string create_msg_2(int index, std::string msg);
 		void user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);

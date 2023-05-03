@@ -66,17 +66,11 @@ void Server::delete_fd(int index) {
 void Server::getting_command(int index, std::string buffer) {
 
     std::vector<std::string> array;
-    std::stringstream ss(buffer);
 
-    std::string word;
-    while (ss >> word) {
-			array.push_back(word);
-    }
-
+	array = parse(buffer);
 
 	int i = 0;
 	// std::cout << "start of vector" << std::endl;
-	i = 0;
 	for (std::vector<std::string>::iterator it = array.begin(); it != array.end(); ++it) {
 		std::cout << "i:" << i << ", value: " << *it << std::endl;
 		i++;
@@ -194,6 +188,35 @@ void Server::getting_command(int index, std::string buffer) {
 		delete_user(index);
 	}
 }
+
+std::vector<std::string> Server::parse(std::string input) {
+	std::vector<std::string> vec, result;
+	std::stringstream ss(input);
+	std::string temp = "";
+
+	while (getline(ss, temp)) {
+		vec.push_back(temp);
+	}
+
+	ss.str(input);
+	ss.clear();
+	
+	if (vec.size() >= 2) {
+		while (ss >> temp) {
+			result.push_back(temp);
+		}
+	} else {
+		temp = input.substr(0, input.find_last_of(':'));
+		ss.str(temp);
+		ss.clear();
+		while (ss >> temp) {
+			result.push_back(temp);
+		}
+		result.push_back(input.substr(input.find_last_of(':')));
+	}
+	return result;
+}
+
 
 
 void Server::user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg){
