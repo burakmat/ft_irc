@@ -67,8 +67,13 @@ void Server::getting_command(int index, std::string buffer) {
 
     std::vector<std::string> array;
 
-	array = parse(buffer);
-
+		std::stringstream ss(buffer);
+		std::string word;
+		while (ss >> word)
+		{
+			array.push_back(word);
+		}
+		
 	int i = 0;
 	// std::cout << "start of vector" << std::endl;
 	for (std::vector<std::string>::iterator it = array.begin(); it != array.end(); ++it) {
@@ -92,7 +97,7 @@ void Server::getting_command(int index, std::string buffer) {
 		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
 		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
 	}
-	else if (array[0] == "PRIVMSG"){
+	else if (array[0] == "PRIVMSG" || array[0] == "NOTICE"){
 		// user
 		// PRIVMSG abullah :41\r\n
 		// :osman 401 user_osman abullah :No such nick/channel\r\n
