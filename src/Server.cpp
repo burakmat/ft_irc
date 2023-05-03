@@ -189,7 +189,7 @@ void Server::getting_command(int index, std::string buffer) {
 	{
 		// send to all user
 		// nick_osman!user_os23@127.0.0.1 QUIT :Leaving.\r\n
-		remove_from_all_channels(user_list[USER_ID]);
+		remove_from_all_channels(user_list[USER_ID], index);
 		delete_fd(index);
 		delete_user(index);
 	}
@@ -271,9 +271,12 @@ Channel Server::join_channel(std::string channel, int index)
 	}
 }
 
-void Server::remove_from_all_channels(User user)
+void Server::remove_from_all_channels(User user, int index)
 {
 	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
+		if ((*it).user_exists(user)) {
+			(*it).send_message(user, create_msg_2(index, "QUIT :Leaving."));
+		}
 		(*it).remove_from_channel(user);
 	}
 }

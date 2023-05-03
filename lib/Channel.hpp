@@ -14,6 +14,7 @@ class Channel
 
 		bool add_to_channel(User user);
 		bool remove_from_channel(User user);
+		bool user_exists(User user) const;
 		
 		std::string get_name() const;
 		void set_topic(std::string str);

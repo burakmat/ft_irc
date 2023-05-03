@@ -33,6 +33,15 @@ bool Channel::remove_from_channel(User user)
 	}
 	return false;
 }
+// Returns true if the given user exists on the channel, false otherwise.
+bool Channel::user_exists(User user) const {
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if ((*it).get_nick_name() == user.get_nick_name()) {
+			return true;
+		}
+	}
+	return false;
+}
 
 std::string Channel::get_name() const
 {
@@ -64,7 +73,7 @@ std::string Channel::get_str_user_list() const {
 	return users;
 }
 
-// Does server send the message to sender???
+// Sends the given message to the every fd except given user's.
 void Channel::send_message(User sender, std::string message) const
 {
 	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
