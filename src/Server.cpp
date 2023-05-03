@@ -40,6 +40,49 @@ void Server::getting_command(int index, std::string buffer) {
 		command_part(index, array);
 	else if (array[0] == "QUIT")
 		command_quit(index);
+	else if (array[0] == "LIST")
+	{
+		for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it){
+			send_msg(pfds[index].fd, create_msg(index, "322", (*it).get_name() + " " + std::to_string((*it).get_user_list().size()) + " :"));
+		}
+		send_msg(pfds[index].fd, create_msg(index, "323", ":End of LIST"));
+	}
+	
+	else if (array[0] == "MODE"){
+		// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
+		//  a - user is flagged as away;
+		//  i - marks a users as invisible;
+		//  w - user receives wallops;
+		//  r - restricted user connection;
+		//  o - operator flag;
+		//  O - local operator flag;
+		//  s - marks a user for receipt of server notices.
+
+
+		// CHANNEL MODES:
+		// O - give "channel creator" status;
+		// o - give/take channel operator privilege;
+		// v - give/take the voice privilege;
+
+		// a - toggle the anonymous channel flag;
+		// i - toggle the invite-only channel flag;
+		// m - toggle the moderated channel;
+		// n - toggle the no messages to channel from clients on the
+		// 		outside;
+		// q - toggle the quiet channel flag;
+		// p - toggle the private channel flag;
+		// s - toggle the secret channel flag;
+		// r - toggle the server reop channel flag;
+		// t - toggle the topic settable by channel operator only flag;
+
+		// k - set/remove the channel key (password);
+		// l - set/remove the user limit to channel;
+
+		// b - set/remove ban mask to keep users out;
+		// e - set/remove an exception mask to override a ban mask;
+		// I - set/remove an invitation mask to automatically override
+		// 		the invite-only flag;
+	}
 	else 
 		send_msg(pfds[index].fd, create_msg(index, "421", array[0] + " :Unknown command"));
 }
@@ -163,7 +206,6 @@ void Server::command_privmsg(int index, std::vector<std::string> array){
 		user_to_user(index, array[0], array[1], array[2]);
 	else
 		send_msg(pfds[index].fd, create_msg(index, "401", array[1] + " :No such nick/channel"));
-
 }
 
 void Server::command_join(int index, std::vector<std::string> array){
