@@ -196,7 +196,7 @@ void Server::remove_from_all_channels(User user, int index)
 
 // PRIVATE FUNCTIONS
 void Server::command_user(int index, std::vector<std::string> array) {
-	if (array[1] == password) {
+	if (array[1].substr(1) == password) {
 		create_user(array[3], array[8], array[6].substr(1), index);
 		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
 		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
