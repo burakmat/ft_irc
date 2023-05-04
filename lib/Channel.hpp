@@ -21,6 +21,7 @@ class Channel
 		std::string get_topic() const;
 		std::string get_str_user_list() const;
 		std::vector<User> get_user_list() const;
+		int verified_size() const;
 
 		void send_message(User sender, std::string message) const;
 };

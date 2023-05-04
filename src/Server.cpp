@@ -33,83 +33,86 @@ void Server::getting_command(int index, std::string buffer) {
 	}
 
 	// if (array[0] == "USER")
-	if (array[0] == "PASS")
+	if (array[0] == "PASS" || array[0] == "USER")
 		command_user(index, array);
-	else if (array[0] == "PRIVMSG" || array[0] == "NOTICE")
-		command_privmsg(index, array);
-	else if (array[0] == "JOIN")
-		command_join(index, array);
-	else if (array[0] == "TOPIC")
-		command_topic(index, array);
-	else if (array[0] == "WHO")
-		command_who(index, array);
-	else if (array[0] == "PART")
-		command_part(index, array);
-	else if (array[0] == "QUIT")
-		command_quit(index);
-	else if (array[0] == "LIST")
+	else if (user_list[USER_ID].is_verified())
 	{
-		for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it){
-			send_msg(pfds[index].fd, create_msg(index, "322", (*it).get_name() + " " + std::to_string((*it).get_user_list().size()) + " :"));
+		if (array[0] == "PRIVMSG" || array[0] == "NOTICE")
+			command_privmsg(index, array);
+		else if (array[0] == "JOIN")
+			command_join(index, array);
+		else if (array[0] == "TOPIC")
+			command_topic(index, array);
+		else if (array[0] == "WHO")
+			command_who(index, array);
+		else if (array[0] == "PART")
+			command_part(index, array);
+		else if (array[0] == "QUIT")
+			command_quit(index);
+		else if (array[0] == "LIST")
+		{
+			for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it){
+				send_msg(pfds[index].fd, create_msg(index, "322", (*it).get_name() + " " + std::to_string((*it).get_user_list().size()) + " :"));
+			}
+			send_msg(pfds[index].fd, create_msg(index, "323", ":End of LIST"));
 		}
-		send_msg(pfds[index].fd, create_msg(index, "323", ":End of LIST"));
+		else if (array[0] == "PING")
+		{
+			// :osman PONG osman :1683141683\r\n'
+			send_msg(pfds[index].fd, ":" + get_host_name() + " PONG " + get_host_name() + " :" + array[1] + "\r\n");
+		}
+		else if (array[0] == "NAMES")
+		{
+			// [127.0.0.1:58265] -> b'NAMES #aynen\r\n'
+			// [127.0.0.1:58265] <- b':osman 353 abdullah = #aynen :abdullah nick_osman\r\n
+			// :osman 366 abdullah #aynen :End of NAMES list\r\n'
+
+			int channel_index = is_channel_active(array[1]);
+			send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
+			send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
+		}
+		else if (array[0] == "INVITE"){
+			// 'INVITE bmat #aynen\r\n'
+			// :servername 341 osman bmat #aynen\r\n /success
+			send_msg(pfds[index].fd, create_msg(index, "341", array[1] + " " + array[2]));
+		}
+		else if (array[0] == "MODE"){
+			// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
+			//  a - user is flagged as away;
+			//  i - marks a users as invisible;
+			//  w - user receives wallops;
+			//  r - restricted user connection;
+			//  o - operator flag;
+			//  O - local operator flag;
+			//  s - marks a user for receipt of server notices.
+
+
+			// CHANNEL MODES:
+			// O - give "channel creator" status;
+			// o - give/take channel operator privilege;
+			// v - give/take the voice privilege;
+
+			// a - toggle the anonymous channel flag;
+			// i - toggle the invite-only channel flag;
+			// m - toggle the moderated channel;
+			// n - toggle the no messages to channel from clients on the outside;
+			
+			// q - toggle the quiet channel flag;
+			// p - toggle the private channel flag;
+			// s - toggle the secret channel flag;
+			// r - toggle the server reop channel flag;
+			// t - toggle the topic settable by channel operator only flag;
+
+			// k - set/remove the channel key (password);
+			// l - set/remove the user limit to channel;
+
+			// b - set/remove ban mask to keep users out;
+			// e - set/remove an exception mask to override a ban mask;
+			// I - set/remove an invitation mask to automatically override the invite-only flag;
+		}
+		else 
+			send_msg(pfds[index].fd, create_msg(index, "421", array[0] + " :Unknown command"));
 	}
-	else if (array[0] == "PING")
-	{
-		// :osman PONG osman :1683141683\r\n'
-		send_msg(pfds[index].fd, ":" + get_host_name() + " PONG " + get_host_name() + " :" + array[1] + "\r\n");
-	}
-	else if (array[0] == "NAMES")
-	{
-		// [127.0.0.1:58265] -> b'NAMES #aynen\r\n'
-		// [127.0.0.1:58265] <- b':osman 353 abdullah = #aynen :abdullah nick_osman\r\n
-		// :osman 366 abdullah #aynen :End of NAMES list\r\n'
-
-		int channel_index = is_channel_active(array[1]);
-		send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
-		send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
-	}
-	else if (array[0] == "INVITE"){
-		// 'INVITE bmat #aynen\r\n'
-		// :servername 341 osman bmat #aynen\r\n /success
-		send_msg(pfds[index].fd, create_msg(index, "341", array[1] + " " + array[2]));
-	}
-	else if (array[0] == "MODE"){
-		// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
-		//  a - user is flagged as away;
-		//  i - marks a users as invisible;
-		//  w - user receives wallops;
-		//  r - restricted user connection;
-		//  o - operator flag;
-		//  O - local operator flag;
-		//  s - marks a user for receipt of server notices.
-
-
-		// CHANNEL MODES:
-		// O - give "channel creator" status;
-		// o - give/take channel operator privilege;
-		// v - give/take the voice privilege;
-
-		// a - toggle the anonymous channel flag;
-		// i - toggle the invite-only channel flag;
-		// m - toggle the moderated channel;
-		// n - toggle the no messages to channel from clients on the outside;
-		
-		// q - toggle the quiet channel flag;
-		// p - toggle the private channel flag;
-		// s - toggle the secret channel flag;
-		// r - toggle the server reop channel flag;
-		// t - toggle the topic settable by channel operator only flag;
-
-		// k - set/remove the channel key (password);
-		// l - set/remove the user limit to channel;
-
-		// b - set/remove ban mask to keep users out;
-		// e - set/remove an exception mask to override a ban mask;
-		// I - set/remove an invitation mask to automatically override the invite-only flag;
-	}
-	else 
-		send_msg(pfds[index].fd, create_msg(index, "421", array[0] + " :Unknown command"));
 }
 
 std::vector<std::string> Server::parse(std::string input) {
@@ -143,7 +146,10 @@ std::vector<std::string> Server::parse(std::string input) {
 		while (ss >> temp) {
 			result.push_back(temp);
 		}
-		result.push_back(input.substr(input.find_last_of(':')));
+		ss.str(input.substr(input.find_last_of(':')));
+		ss.clear();
+		ss >> temp;
+		result.push_back(temp);
 	}
 	return result;
 }
@@ -155,7 +161,7 @@ void Server::user_to_user(int index, std::string command, std::string receiver_n
 }
 
 std::string Server::create_msg(int index, std::string code, std::string msg) {
-	return ":" + host_name + " " + code + " " + user_list[USER_ID].get_nick_name() + " " + msg + "\r\n";	
+	return ":" + host_name + " " + code + " " + user_list[USER_ID].get_nick_name() + " " + msg + "\r\n";
 }
 
 std::string Server::create_msg_2(int index, std::string msg){ //index = sender
@@ -165,6 +171,17 @@ std::string Server::create_msg_2(int index, std::string msg){ //index = sender
 void Server::send_msg(int fd, std::string msg) {
 	std::cout << "sending back: " << msg ;
 	write(fd, msg.c_str(), msg.length());
+}
+
+int Server::verified_size() const
+{
+	int counter = 0;
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if ((*it).is_verified()) {
+			++counter;
+		}
+	}
+	return counter;
 }
 
 int Server::is_nickname_exist(std::string nick) const
@@ -215,13 +232,18 @@ void Server::remove_from_all_channels(User user, int index)
 
 // PRIVATE FUNCTIONS
 void Server::command_user(int index, std::vector<std::string> array) {
-	if (array[1].substr(1) == password) {
-		create_user(array[3], array[8], array[6].substr(1), index);
+	std::cout << password << ": " << password.length() << ", " << array[1].substr(1) << ": " << array[1].substr(1).length() << std::endl;
+	if (array[0] != "USER" && array[1].substr(1) == password) {
+		user_list[USER_ID].set_verified(true);
+		set_user(array[3], array[8], array[6].substr(1), index);
 		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
 		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
 		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
 		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
-		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(user_list.size()) + " users and 0 services on 1 server"));
+		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(verified_size()) + " users and 0 services on 1 server"));
+	} else {
+		std::string error_message = ":" + host_name + " 464 :Password incorrect\r\n";
+		send_msg(pfds[index].fd, error_message);
 	}
 }
 
@@ -273,15 +295,17 @@ void Server::command_part(int index, std::vector<std::string> array){
 	}
 }
 
-void Server::command_quit(int index){
-	remove_from_all_channels(user_list[USER_ID], index);
+void Server::command_quit(int index) {
+	if (user_list[USER_ID].is_verified()) {
+		remove_from_all_channels(user_list[USER_ID], index);
+	}
 	delete_fd(index);
 	delete_user(index);
 }
 
 
 // USER/FD CREATE/DELETE
-void Server::create_user(std::string user_name, std::string nick_name, std::string real_name, int index) {
+void Server::set_user(std::string user_name, std::string nick_name, std::string real_name, int index) {
 
 	if (is_nickname_exist(nick_name) == -1) {
 		user_list[USER_ID].set_names(user_name, nick_name, real_name);
@@ -302,7 +326,7 @@ void Server::create_fd(int fd) {
 }
 
 void Server::delete_user(int index) {
-		user_list.erase(user_list.begin() + USER_ID);
+	user_list.erase(user_list.begin() + USER_ID);
 }
 
 void Server::delete_fd(int index) {

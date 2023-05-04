@@ -3,6 +3,7 @@
 
 User::User(int _fd)
 : fd(_fd),
+verified(false),
 user_name(""),
 nick_name(""),
 real_name("")
@@ -21,6 +22,16 @@ std::string User::get_nick_name() const {
 
 std::string User::get_real_name() const {
 	return this->real_name;
+}
+
+bool User::is_verified() const
+{
+	return verified;
+}
+
+void User::set_verified(bool truth)
+{
+	verified = truth;
 }
 
 void User::set_names(std::string _user_name, std::string _nick_name, std::string _real_name)

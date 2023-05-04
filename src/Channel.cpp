@@ -48,6 +48,17 @@ std::vector<User> Channel::get_user_list() const
 	return user_list;
 }
 
+int Channel::verified_size() const
+{
+	int counter = 0;
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		if ((*it).is_verified()) {
+			++counter;
+		}
+	}
+	return counter;
+}
+
 void Channel::set_topic(std::string str)
 {
 	topic = str;

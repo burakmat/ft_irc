@@ -35,6 +35,7 @@ class Server : public Socket
 		std::string create_msg_2(int index, std::string msg);
 		void user_to_user(int index, std::string command, std::string receiver_nick_name, std::string msg);
 		void send_msg(int fd, std::string msg);
+		int verified_size() const;
 	
 		//CHANNEL
 		Channel &find_channel(std::string name);
@@ -45,14 +46,12 @@ class Server : public Socket
 		void create_fd(int fd);
 		
 		void delete_user(int index);
-		void create_user(std::string user_name, std::string nick_name, std::string real_name, int index);
 
-		//GETTER
+		//GETTERS and SETTERS
 		std::string get_host_name();
-
-		//SETTER
 		void set_time();
 		void set_host_name();
+		void set_user(std::string user_name, std::string nick_name, std::string real_name, int index);
 		
 		// DEBUG
 		void print_info() const;
