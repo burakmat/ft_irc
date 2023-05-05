@@ -327,15 +327,22 @@ void Server::remove_from_all_channels(User user, int index)
 
 // PRIVATE FUNCTIONS
 void Server::command_user(int index, std::vector<std::string> array) {
-	std::cout << password << ": " << password.length() << ", " << array[1].substr(1) << ": " << array[1].substr(1).length() << std::endl;
-	if (array[0] != "USER" && array[1].substr(1) == password) {
+	// std::cout << password << ": " << password.length() << ", " << array[1].substr(1) << ": " << array[1].substr(1).length() << std::endl;
+	if (array[0] == "PASS" && array[1].substr(1) == password) {
 		user_list[USER_ID].set_verified(true);
-		set_user(array[3], array[8], array[6].substr(1), index);
-		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
-		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
-		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
-		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
-		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(verified_size()) + " users and 0 services on 1 server"));
+	}
+	int i = array[0] == "PASS" ? 2 : 0;
+	if (user_list[USER_ID].is_verified()) {
+		if (array.size() > 2) {
+			set_user(array[1 + i], array[6 + i], array[4 + i].substr(1), index);
+			send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
+			send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
+			send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
+			send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
+			send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(verified_size()) + " users and 0 services on 1 server"));
+		} else {
+			// No replies
+		}
 	} else {
 		std::string error_message = ":" + host_name + " 464 :Password incorrect\r\n";
 		send_msg(pfds[index].fd, error_message);
