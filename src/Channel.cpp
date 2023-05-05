@@ -185,7 +185,11 @@ bool Channel::user_exists_name(std::string name) const
 
 void Channel::print_user_list() const
 {
-	for (std::vector<std::string>::const_iterator it = mode_list.begin(); it != mode_list.end(); ++it) {
-		std::cout << "users: " << (*it) << std::endl;
+	for (std::vector<std::string>::const_iterator it = mod_users.begin(); it != mod_users.end(); ++it) {
+		std::cout << "operator users: " << (*it) << std::endl;
 	}
+	for (std::vector<User>::const_iterator it = user_list.begin(); it != user_list.end(); ++it) {
+		std::cout << "normal users: " << (*it).get_nick_name() << std::endl;
+	}
+
 }

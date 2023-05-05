@@ -223,35 +223,6 @@ void Server::getting_command(int index, std::string buffer)
 					channel_list[channel_index].remove_mode_users(array[3]);
 				}
 			}
-			
-			
-			
-
-
-			// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
-			//  a - user is flagged as away;
-			//  i - marks a users as invisible;
-			//  w - user receives wallops;
-			//  r - restricted user connection;
-			//  o - operator flag;
-			//  O - local operator flag;
-			//  s - marks a user for receipt of server notices.
-
-
-
-			
-
-
-			// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
-			//  a - user is flagged as away;
-			//  i - marks a users as invisible;
-			//  w - user receives wallops;
-			//  r - restricted user connection;
-			//  o - operator flag;
-			//  O - local operator flag;
-			//  s - marks a user for receipt of server notices.
-
-
 			// CHANNEL MODES:
 			// i - toggle the invite-only channel flag;
 		}
@@ -438,15 +409,17 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 					for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
 						if ((*it).user_exists_name(user_list[USER_ID].get_nick_name())) {
 							(*it).send_message(user_list[USER_ID], create_msg_2(index, "NICK " + array[i + 1].substr(1)), true);
+							
+							User user = user_list[USER_ID];
+							user.set_nick_name(array[i + 1].substr(1));
+							(*it).user_list.insert((*it).user_list.begin(), user);
+							(*it).add_mode_users(array[i + 1].substr(1));
+							
+							(*it).remove_from_channel(user_list[USER_ID]);
 							if (user_list[USER_ID].get_nick_name() == (*it).get_creator()) {
 								(*it).set_creator(array[i + 1].substr(1));
 							}
-							(*it).remove_mode_users(user_list[USER_ID].get_nick_name());
-							(*it).remove_from_channel(user_list[USER_ID]);
-							User user = user_list[USER_ID];
-							user.set_nick_name(array[i + 1].substr(1));
-							(*it).user_list.push_back(user);
-							(*it).add_mode_users(array[i + 1].substr(1));
+							
 						}
 					}
 					user_list[USER_ID].set_nick_name(array[i + 1].substr(1));
