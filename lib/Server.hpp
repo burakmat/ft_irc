@@ -10,7 +10,8 @@ class Server : public Socket
 		std::string password;
 
 		int is_nickname_exist(std::string nick) const;
-		int is_channel_active(std::string);
+		int is_channel_active(std::string channel, std::string user_name);
+		int is_channel_active_v2(std::string channel);
 		void command_user(int index, std::vector<std::string> array);
 		void command_privmsg(int index, std::vector<std::string> array);
 		void command_join(int index, std::vector<std::string> array);
@@ -55,5 +56,6 @@ class Server : public Socket
 		
 		// DEBUG
 		void print_info() const;
+		void print_channel_list() const;
 };
 

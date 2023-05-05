@@ -67,16 +67,98 @@ void Server::getting_command(int index, std::string buffer) {
 			// [127.0.0.1:58265] <- b':osman 353 abdullah = #aynen :abdullah nick_osman\r\n
 			// :osman 366 abdullah #aynen :End of NAMES list\r\n'
 
-			int channel_index = is_channel_active(array[1]);
+			int channel_index = is_channel_active(array[1], user_list[USER_ID].get_nick_name());
 			send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
 			send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
 		}
 		else if (array[0] == "INVITE"){
 			// 'INVITE bmat #aynen\r\n'
 			// :servername 341 osman bmat #aynen\r\n /success
-			send_msg(pfds[index].fd, create_msg(index, "341", array[1] + " " + array[2]));
+			send_msg(pfds[index].fd, create_msg(index, "341", array[2] + " " + array[1]));
 		}
 		else if (array[0] == "MODE"){
+			// 		[127.0.0.1:52516] -> b'MODE #aynen +k as\r\n'
+			// [127.0.0.1:52516] <- b':bmat!bmat@127.0.0.1 MODE #aynen +k as\r\n'
+			// [127.0.0.1:52517] <- b':bmat!bmat@127.0.0.1 MODE #aynen +k as\r\n''
+
+			// 			[127.0.0.1:54109] -> b'MODE #aynen +k\r\n'
+			// [127.0.0.1:54109] <- b':osman 461 bmat MODE :Not enough parameters\r\n'
+
+
+			// [127.0.0.1:54109] -> b'MODE #aynen -k\r\n'
+			// [127.0.0.1:54107] <- b':bmat!bmat@127.0.0.1 MODE #aynen -k\r\n'
+			// [127.0.0.1:54109] <- b':bmat!bmat@127.0.0.1 MODE #aynen -k\r\n'
+
+			// [127.0.0.1:59426] -> b'MODE nick_osman +ok\r\n'
+			// [127.0.0.1:59426] <- b':osman 501 nick_osman :Unknown MODE flag\r\n'
+
+
+			if (array.size() < 3)
+			{
+				send_msg(pfds[index].fd, create_msg(index, "461", array[1] + " MODE :Not enough parameters"));
+				return;
+			}
+
+			int channel_index = is_channel_active_v2(array[1]);
+			
+			if (channel_index == -1)
+			{
+				send_msg(pfds[index].fd, create_msg(index, "403", array[1] + " :No such channel"));
+				return ;
+			}
+
+			channel_list[channel_index].print_user_list();
+
+			if (!channel_list[channel_index].is_mode_users(user_list[USER_ID].get_nick_name()))
+			{
+				send_msg(pfds[index].fd, create_msg(index, "482", ":You're not channel operator"));
+				return ;
+			}
+			std::cout << "içerde user: " << user_list[USER_ID].get_nick_name() << std::endl;
+
+			if (array[2] == "+k")
+			{
+				if (array.size() < 4){
+					send_msg(pfds[index].fd, create_msg(index, "461", array[1] + " MODE :Not enough parameters"));
+					return ;
+				}
+				channel_list[channel_index].send_message(user_list[USER_ID], create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+				channel_list[channel_index].add_mode("+k");
+				channel_list[channel_index].set_password(array[3]);
+			}
+			else if (array[2] == "-k")
+			{
+				channel_list[channel_index].send_message(user_list[USER_ID], create_msg_2(index, "MODE " + array[1] + " " + array[2]), true);
+				channel_list[channel_index].remove_mode("+k");
+				channel_list[channel_index].set_password("");
+			}
+			else if (array[2] == "+o")
+			{
+				if (array.size() < 4){
+					send_msg(pfds[index].fd, create_msg(index, "461", array[1] + " MODE :Not enough parameters"));
+					return ;
+				}
+
+				if(!channel_list[channel_index].user_exists_name(array[3])){
+					send_msg(pfds[index].fd, create_msg(index, "401", array[3] + " :No such nick/channel"));
+				} else {
+					channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+					channel_list[channel_index].add_mode_users(array[3]);
+				}
+			}
+			else if (array[2] == "-o")
+			{
+				if(!channel_list[channel_index].user_exists_name(array[3])){
+					send_msg(pfds[index].fd, create_msg(index, "401", array[3] + " :No such nick/channel"));
+				} else {
+					channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+					channel_list[channel_index].remove_mode_users(array[3]);
+				}
+			}
+			
+			
+
+
 			// MODE <nickname> *( ( "+" / "-" ) *( "i" / "w" / "o" / "O" / "r" ) )
 			//  a - user is flagged as away;
 			//  i - marks a users as invisible;
@@ -197,7 +279,7 @@ int Server::is_nickname_exist(std::string nick) const
 
 // CHANNEL_METHODS
 
-int Server::is_channel_active(std::string channel)
+int Server::is_channel_active(std::string channel, std::string user_name)
 {
 	int i = 0;
 	for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it, ++i) {
@@ -205,9 +287,22 @@ int Server::is_channel_active(std::string channel)
 			return i;
 	}
 	Channel new_channel(channel);
+	new_channel.set_creator(user_name);
+	new_channel.add_mode_users(user_name);
 	channel_list.push_back(new_channel);
 	return i;
 }
+
+int Server::is_channel_active_v2(std::string channel)
+{
+	int i = 0;
+	for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it, ++i) {
+		if ((*it).get_name() == channel)
+			return i;
+	}
+	return -1;
+}
+
 
 Channel &Server::find_channel(std::string name)
 {
@@ -223,7 +318,7 @@ void Server::remove_from_all_channels(User user, int index)
 {
 	for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
 		if ((*it).user_exists(user)) {
-			(*it).send_message(user, create_msg_2(index, "QUIT :Leaving."));
+			(*it).send_message(user, create_msg_2(index, "QUIT :Leaving."), false);
 		}
 		(*it).remove_from_channel(user);
 	}
@@ -249,7 +344,7 @@ void Server::command_user(int index, std::vector<std::string> array) {
 
 void Server::command_privmsg(int index, std::vector<std::string> array){
 	if (array[1].substr(0,1) == "#") //channel-user
-		find_channel(array[1]).send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1] + " " + array[2]));
+		find_channel(array[1]).send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1] + " " + array[2]), false);
 	else if (is_nickname_exist(array[1]) != -1) //user-user
 		user_to_user(index, array[0], array[1], array[2]);
 	else
@@ -257,24 +352,49 @@ void Server::command_privmsg(int index, std::vector<std::string> array){
 }
 
 void Server::command_join(int index, std::vector<std::string> array){
-	int channel_index = is_channel_active(array[1]);
+// 	[127.0.0.1:53658] -> b'JOIN #pass \r\n'
+// [127.0.0.1:53658] <- b':osman 475 nick_osman #pass :Cannot join channel (+k) - bad key\r\n'
+
+	int channel_index = is_channel_active(array[1], user_list[USER_ID].get_nick_name());
 	if (channel_list[channel_index].user_exists(user_list[USER_ID]))
 		return ;
+
+	std::cout << "if check: " << channel_list[channel_index].is_exist_mode("+k") << "size: " << array.size() << "pass: " << channel_list[channel_index].get_password() << std::endl;
+	if (channel_list[channel_index].is_exist_mode("+k") && (array.size() < 3 || array[2] != channel_list[channel_index].get_password()))
+	{
+		send_msg(pfds[index].fd, create_msg(index, "475", array[1] + " :Cannot join channel (+k) - bad key"));
+		return ;
+	}
+	// if (channel_list[channel_index].is_exist_mode("+l") && channel_list[channel_index].get_limit() <= channel_list[channel_index].get_size())
+	// {
+	// 	send_msg(pfds[index].fd, create_msg(index, "471", array[1] + " :Cannot join channel (+l) - channel is full"));
+	// 	return ;
+	// }
+	// if (channel_list[channel_index].is_exist_mode("+i") && !channel_list[channel_index].is_invited(user_list[USER_ID]))
+	// {
+	// 	send_msg(pfds[index].fd, create_msg(index, "473", array[1] + " :Cannot join channel (+i) - you must be invited"));
+	// 	return ;
+	// }
+	// if (channel_list[channel_index].is_exist_mode("+b") && channel_list[channel_index].is_banned(user_list[USER_ID]))
+	// {
+	// 	send_msg(pfds[index].fd, create_msg(index, "474", array[1] + " :Cannot join channel (+b) - you are banned"));
+	// 	return ;
+	// }
+
+
 	channel_list[channel_index].add_to_channel(user_list[USER_ID]);
 	send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1])); 
 	send_msg(pfds[index].fd, create_msg(index, "331", array[1] + " :" + channel_list[channel_index].get_topic()));
 	send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
 	send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
-	channel_list[channel_index].send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]));
-
+	channel_list[channel_index].send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1]), false);
 }
 
 void Server::command_topic(int index, std::vector<std::string> array){
 	Channel channel = find_channel(array[1]);
 	channel.set_topic(array[2].substr(1));
 	std::string message = create_msg_2(index, "TOPIC " + array[1] + " " + array[2]);
-	channel.send_message(user_list[USER_ID], message);
-	write(user_list[USER_ID].get_fd(), message.c_str(), message.length());
+	channel.send_message(user_list[USER_ID], message, true);
 }
 
 void Server::command_who(int index, std::vector<std::string> array){
@@ -368,6 +488,15 @@ void Server::print_info() const {
 	i = 0;
 	for (std::vector<struct pollfd>::const_iterator it = pfds.begin(); it != pfds.end(); ++it) {
 		std::cout << "Server fd " << i << ": " << (*it).fd << std::endl;
+		++i;
+	}
+}
+
+//debug
+void Server::print_channel_list() const {
+	int i = 0;
+	for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
+		std::cout << "Channel " << i << ": " << (*it).get_name() << std::endl;
 		++i;
 	}
 }
