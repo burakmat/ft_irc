@@ -10,9 +10,9 @@ class Channel
 		std::string password;
 		std::vector<std::string> mode_list;
 		std::string creator;
-		std::vector<User> user_list;
 
 	public:
+		std::vector<User> user_list;
 		std::vector<std::string> mod_users;
 
 		Channel(std::string name);

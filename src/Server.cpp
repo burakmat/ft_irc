@@ -438,6 +438,13 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 					for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
 						if ((*it).user_exists_name(user_list[USER_ID].get_nick_name())) {
 							(*it).send_message(user_list[USER_ID], create_msg_2(index, "NICK " + array[i + 1].substr(1)), true);
+							if (user_list[USER_ID].get_nick_name() == (*it).get_creator()) {
+								(*it).set_creator(array[i + 1].substr(1));
+							}
+							(*it).remove_mode_users(user_list[USER_ID].get_nick_name());
+							User user = user_list[USER_ID];
+							user.set_nick_name(array[i + 1].substr(1));
+							(*it).user_list.push_back(user);
 						}
 					}
 					user_list[USER_ID].set_nick_name(array[i + 1].substr(1));
