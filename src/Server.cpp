@@ -442,6 +442,7 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 								(*it).set_creator(array[i + 1].substr(1));
 							}
 							(*it).remove_mode_users(user_list[USER_ID].get_nick_name());
+							(*it).remove_from_channel(user_list[USER_ID]);
 							User user = user_list[USER_ID];
 							user.set_nick_name(array[i + 1].substr(1));
 							(*it).user_list.push_back(user);
