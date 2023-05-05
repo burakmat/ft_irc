@@ -445,6 +445,7 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 							User user = user_list[USER_ID];
 							user.set_nick_name(array[i + 1].substr(1));
 							(*it).user_list.push_back(user);
+							(*it).add_mode_users(array[i + 1].substr(1));
 						}
 					}
 					user_list[USER_ID].set_nick_name(array[i + 1].substr(1));
