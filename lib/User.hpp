@@ -18,6 +18,9 @@ class User
 		std::string get_user_name() const;
 		std::string get_nick_name() const;
 		std::string get_real_name() const;
+		void set_user_name(std::string _user_name);
+		void set_nick_name(std::string _nick_name);
+		void set_real_name(std::string _real_name);
 		bool is_verified() const;
 		void set_verified(bool truth);
 		void set_names(std::string _user_name, std::string _nick_name, std::string _real_name);

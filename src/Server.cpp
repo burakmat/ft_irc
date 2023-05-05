@@ -35,7 +35,7 @@ void Server::getting_command(int index, std::string buffer)
 	}
 
 	// if (array[0] == "USER")
-	if (array[0] == "PASS" || array[0] == "USER")
+	if (array[0] == "PASS" || array[0] == "USER" || array[0] == "NICK")
 		command_user(index, array);
 	else if (user_list[USER_ID].is_verified())
 	{
@@ -422,33 +422,67 @@ void Server::remove_from_all_channels(User user, int index)
 	}
 }
 
+int Server::read_init_command(std::vector<std::string> array, int index)
+{
+	unsigned long i = 0;
+	while (i < array.size()) {
+		if (array[i] == "PASS" && array[i + 1].substr(1) == password) {
+			user_list[USER_ID].set_verified(true);
+			i += 1;
+		}
+		else if (user_list[USER_ID].is_verified()) {
+			if (array[i] == "NICK") {
+				if (array[i + 1][0] == ':') {
+					// Cannot start with number
+					// Should inform all channel members
+					for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
+						if ((*it).user_exists_name(user_list[USER_ID].get_nick_name())) {
+							(*it).send_message(user_list[USER_ID], create_msg_2(index, "NICK " + array[i + 1].substr(1)), true);
+						}
+					}
+					user_list[USER_ID].set_nick_name(array[i + 1].substr(1));
+					return 1;
+				} else {
+					user_list[USER_ID].set_nick_name(array[i + 1]);
+				}
+				i += 1;
+			}
+			else if (array[i] == "USER") {
+				user_list[USER_ID].set_user_name(array[i + 1]);
+				user_list[USER_ID].set_real_name(array[i + 4].substr(1));
+				i += 4;
+			}
+		}
+		++i;
+	}
+	return 0;
+}
+
+
+
 // PRIVATE FUNCTIONS
 void Server::command_user(int index, std::vector<std::string> array)
 {
 	// std::cout << password << ": " << password.length() << ", " << array[1].substr(1) << ": " << array[1].substr(1).length() << std::endl;
-	if (array[0] == "PASS" && array[1].substr(1) == password)
-	{
-		user_list[USER_ID].set_verified(true);
+	// if (array[0] == "PASS" && array[1].substr(1) == password) {
+	// 	user_list[USER_ID].set_verified(true);
+	// }
+
+	if (read_init_command(array, index) == 1) {
+		return ;
 	}
-	int i = array[0] == "PASS" ? 2 : 0;
-	if (user_list[USER_ID].is_verified())
-	{
-		if (array.size() > 2)
-		{
-			set_user(array[1 + i], array[6 + i], array[4 + i].substr(1), index);
-			send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
-			send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
-			send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
-			send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
-			send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(verified_size()) + " users and 0 services on 1 server"));
-		}
-		else
-		{
-			// No replies
-		}
+
+	if (user_list[USER_ID].is_verified() && (user_list[USER_ID].get_nick_name() == "" || user_list[USER_ID].get_nick_name() == "")) {
+		// Waits for NICK or USER
 	}
-	else
-	{
+	else if (user_list[USER_ID].is_verified() && user_list[USER_ID].get_nick_name() != "" && user_list[USER_ID].get_real_name() != "" && user_list[USER_ID].get_user_name() != "") {
+		// set_user(array[1 + i], array[6 + i], array[4 + i].substr(1), index);
+		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
+		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
+		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
+		send_msg(pfds[index].fd, create_msg(index, "004", host_name + " v1 o o"));
+		send_msg(pfds[index].fd, create_msg(index, "251", ":There are " + std::to_string(verified_size()) + " users and 0 services on 1 server"));
+	} else {
 		std::string error_message = ":" + host_name + " 464 :Password incorrect\r\n";
 		send_msg(pfds[index].fd, error_message);
 	}

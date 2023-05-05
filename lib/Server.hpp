@@ -19,6 +19,7 @@ class Server : public Socket
 		void command_who(int index, std::vector<std::string> array);
 		void command_part(int index, std::vector<std::string> array);
 		void command_quit(int index);
+		int read_init_command(std::vector<std::string> array, int index);
 
 	public:
 		std::vector<struct pollfd> pfds;
