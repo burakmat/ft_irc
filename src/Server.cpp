@@ -55,7 +55,7 @@ void Server::getting_command(int index, std::string buffer)
 		{
 			for (std::vector<Channel>::const_iterator it = channel_list.begin(); it != channel_list.end(); ++it)
 			{
-				send_msg(pfds[index].fd, create_msg(index, "322", (*it).get_name() + " " + std::to_string((*it).get_user_list().size()) + " :"));
+				send_msg(pfds[index].fd, create_msg(index, "322", (*it).get_name() + " " + std::to_string((*it).get_user_list().size()) + " :" + (*it).get_topic()));
 			}
 			send_msg(pfds[index].fd, create_msg(index, "323", ":End of LIST"));
 		}
@@ -557,10 +557,12 @@ void Server::command_join(int index, std::vector<std::string> array)
 
 void Server::command_topic(int index, std::vector<std::string> array)
 {
-	Channel channel = find_channel(array[1]);
-	channel.set_topic(array[2].substr(1));
+	int channel_index = is_channel_active_v2(array[1]);
+	if (channel_index == -1)
+		return ;
+	channel_list[channel_index].set_topic(array[2].substr(1));
 	std::string message = create_msg_2(index, "TOPIC " + array[1] + " " + array[2]);
-	channel.send_message(user_list[USER_ID], message, true);
+	channel_list[channel_index].send_message(user_list[USER_ID], message, true);
 }
 
 void Server::command_who(int index, std::vector<std::string> array)
