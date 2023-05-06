@@ -423,6 +423,11 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 			if (array[i] == "NICK") {
 				if (array[i + 1][0] == ':') {
 					// Cannot start with number
+					if (array[i + 1].size() >= 2 && isdigit(array[i + 1][1])) {
+						std::string message = array[i + 1].substr(1) + " :Erroneous Nickname";
+						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "432", message));
+						return 1;
+					}
 					// Should inform all channel members
 					for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
 						if ((*it).user_exists_name(user_list[USER_ID].get_nick_name())) {
@@ -443,6 +448,11 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 					user_list[USER_ID].set_nick_name(array[i + 1].substr(1));
 					return 1;
 				} else {
+					if (i + 1 < array.size() && isdigit(array[i + 1][0])) {
+						std::string message = array[i + 1] + " :Erroneous Nickname";
+						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "432", message));
+						return 1;
+					}
 					user_list[USER_ID].set_nick_name(array[i + 1]);
 				}
 				i += 1;
