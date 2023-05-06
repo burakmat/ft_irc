@@ -10,6 +10,7 @@ class Channel
 		std::string password;
 		std::vector<std::string> mode_list;
 		std::string creator;
+		std::vector<std::string> invited_list;
 
 	public:
 		std::vector<User> user_list;
@@ -43,6 +44,14 @@ class Channel
 		void add_mode_users(std::string name);
 		void remove_mode_users(std::string name);
 		void msg_for_mode_users(int fd, std::string msg);
+
+		// Invite utils
+		void set_inv_only(bool inv_only);
+		bool is_inv_only();
+
+		bool add_invite(std::string nick);
+		bool remove_invite(std::string nick);
+		bool is_invited(std::string nick) const;
 
 		//debug 
 		void print_user_list() const;

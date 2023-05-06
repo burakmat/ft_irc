@@ -1,7 +1,8 @@
 #include "Channel.hpp"
 
 Channel::Channel(std::string name)
-: name(name), topic("No topic is set"), password("")
+: name(name), topic("No topic is set"),
+password("")
 {
 }
 
@@ -178,6 +179,54 @@ bool Channel::user_exists_name(std::string name) const
 		}
 	}
 	return false;
+}
+
+// Invite utils
+
+// void Channel::set_inv_only(bool inv_only)
+// {
+// 	invite = inv_only;
+// }
+
+bool Channel::is_inv_only()
+{
+	if (is_exist_mode("+i")) {
+		return true;
+	}
+	return false;
+}
+
+bool Channel::add_invite(std::string nick)
+{
+	for (std::vector<std::string>::iterator it = invited_list.begin(); it != invited_list.end(); ++it) {
+		if ((*it) == nick) {
+			return false;
+		}
+	}
+	invited_list.push_back(nick);
+	return true;
+}
+
+bool Channel::remove_invite(std::string nick)
+{
+	for (std::vector<std::string>::iterator it = invited_list.begin(); it != invited_list.end(); ++it) {
+		if ((*it) == nick) {
+			invited_list.erase(it);
+			return true;
+		}
+	}
+	return false;
+}
+
+bool Channel::is_invited(std::string nick) const
+{
+	for (std::vector<std::string>::const_iterator it = invited_list.begin(); it != invited_list.end(); ++it) {
+		if ((*it) == nick) {
+			return true;
+		}
+	}
+	return false;
+
 }
 
 

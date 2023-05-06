@@ -94,14 +94,15 @@ void Server::getting_command(int index, std::string buffer)
 				return;
 			}
 
-			int user_index = is_nickname_exist(array[1]);
-			if (user_index == -1)
+			int target_user_index = is_nickname_exist(array[1]);
+			if (target_user_index == -1)
 			{
 				send_msg(pfds[index].fd, create_msg(index, "401", array[1] + " :No such nick"));
 				return ;
 			}
 			
-			send_msg(pfds[user_index + 1].fd, create_msg_2(index, array[0] + " " + array[1] + " " + array[2]));
+			channel_list[channel_index].add_invite(user_list[target_user_index].get_nick_name());
+			send_msg(pfds[target_user_index + 1].fd, create_msg_2(index, array[0] + " " + array[1] + " " + array[2]));
 		}
 		else if (array[0] == "KICK")
 		{
@@ -234,11 +235,13 @@ void Server::getting_command(int index, std::string buffer)
 			}
 			else if (array[2] == "+i")
 			{
-				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+				channel_list[channel_index].add_mode("+i");
+				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2]), true);
 			}
 			else if (array[2] == "-i")
 			{
-				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+				channel_list[channel_index].remove_mode("+i");
+				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2]), true);
 			}
 			else {
 				send_msg(pfds[index].fd, create_msg(index, "501", array[2] + " :Unknown MODE flag"));
@@ -528,7 +531,12 @@ void Server::command_join(int index, std::vector<std::string> array)
 		return;
 
 	std::cout << "if check: " << channel_list[channel_index].is_exist_mode("+k") << "size: " << array.size() << "pass: " << channel_list[channel_index].get_password() << std::endl;
-	if (channel_list[channel_index].is_exist_mode("+k") && (array.size() < 3 || array[2] != channel_list[channel_index].get_password()))
+	if (channel_list[channel_index].is_exist_mode("+i") && !channel_list[channel_index].is_invited(user_list[USER_ID].get_nick_name())) {
+		send_msg(pfds[index].fd, create_msg(index, "473", channel_list[channel_index].get_name() + " :Cannot join channel(+i)"));
+		return ;
+	} else if (channel_list[channel_index].is_invited(user_list[USER_ID].get_nick_name())) {
+		channel_list[channel_index].remove_invite(user_list[USER_ID].get_nick_name());
+	} else if (!channel_list[channel_index].is_exist_mode("+i") && channel_list[channel_index].is_exist_mode("+k") && (array.size() < 3 || array[2] != channel_list[channel_index].get_password()))
 	{
 		send_msg(pfds[index].fd, create_msg(index, "475", array[1] + " :Cannot join channel (+k) - bad key"));
 		return;
