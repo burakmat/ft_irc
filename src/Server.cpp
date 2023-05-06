@@ -61,24 +61,47 @@ void Server::getting_command(int index, std::string buffer)
 		}
 		else if (array[0] == "PING")
 		{
-			// :osman PONG osman :1683141683\r\n'
 			send_msg(pfds[index].fd, ":" + get_host_name() + " PONG " + get_host_name() + " :" + array[1] + "\r\n");
 		}
 		else if (array[0] == "NAMES")
 		{
-			// [127.0.0.1:58265] -> b'NAMES #aynen\r\n'
-			// [127.0.0.1:58265] <- b':osman 353 abdullah = #aynen :abdullah nick_osman\r\n
-			// :osman 366 abdullah #aynen :End of NAMES list\r\n'
-
 			int channel_index = is_channel_active(array[1], user_list[USER_ID].get_nick_name());
 			send_msg(pfds[index].fd, create_msg(index, "353", "= " + array[1] + " :" + channel_list[channel_index].get_str_user_list()));
 			send_msg(pfds[index].fd, create_msg(index, "366", array[1] + " :End of NAMES list"));
 		}
+		else if (array[0] == "AWAY")
+		{
+			return;
+		}
 		else if (array[0] == "INVITE")
 		{
-			// 'INVITE bmat #aynen\r\n'
-			// :servername 341 osman bmat #aynen\r\n /success
-			send_msg(pfds[index].fd, create_msg(index, "341", array[2] + " " + array[1]));
+			if (array.size() < 3)
+			{
+				send_msg(pfds[index].fd, create_msg(index, "461", array[0] + " :Not enough parameters"));
+				return;
+			}
+
+			int channel_index = is_channel_active_v2(array[2]);
+			if (channel_index == -1)
+			{
+				send_msg(pfds[index].fd, create_msg(index, "403", array[1] + " :No such channel"));
+				return;
+			}
+
+			if (!channel_list[channel_index].is_mode_users(user_list[USER_ID].get_nick_name()))
+			{
+				send_msg(pfds[index].fd, create_msg(index, "482", ":You're not channel operator"));
+				return;
+			}
+
+			int user_index = is_nickname_exist(array[1]);
+			if (user_index == -1)
+			{
+				send_msg(pfds[index].fd, create_msg(index, "401", array[1] + " :No such nick"));
+				return ;
+			}
+			
+			send_msg(pfds[user_index + 1].fd, create_msg_2(index, array[0] + " " + array[1] + " " + array[2]));
 		}
 		else if (array[0] == "KICK")
 		{
@@ -130,20 +153,6 @@ void Server::getting_command(int index, std::string buffer)
 
 		else if (array[0] == "MODE")
 		{
-			// 		[127.0.0.1:52516] -> b'MODE #aynen +k as\r\n'
-			// [127.0.0.1:52516] <- b':bmat!bmat@127.0.0.1 MODE #aynen +k as\r\n'
-			// [127.0.0.1:52517] <- b':bmat!bmat@127.0.0.1 MODE #aynen +k as\r\n''
-
-			// 			[127.0.0.1:54109] -> b'MODE #aynen +k\r\n'
-			// [127.0.0.1:54109] <- b':osman 461 bmat MODE :Not enough parameters\r\n'
-
-			// [127.0.0.1:54109] -> b'MODE #aynen -k\r\n'
-			// [127.0.0.1:54107] <- b':bmat!bmat@127.0.0.1 MODE #aynen -k\r\n'
-			// [127.0.0.1:54109] <- b':bmat!bmat@127.0.0.1 MODE #aynen -k\r\n'
-
-			// [127.0.0.1:59426] -> b'MODE nick_osman +ok\r\n'
-			// [127.0.0.1:59426] <- b':osman 501 nick_osman :Unknown MODE flag\r\n'
-
 			if (array.size() < 3)
 			{
 				send_msg(pfds[index].fd, create_msg(index, "461", array[1] + " MODE :Not enough parameters"));
@@ -223,8 +232,17 @@ void Server::getting_command(int index, std::string buffer)
 					channel_list[channel_index].remove_mode_users(array[3]);
 				}
 			}
-			// CHANNEL MODES:
-			// i - toggle the invite-only channel flag;
+			else if (array[2] == "+i")
+			{
+				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+			}
+			else if (array[2] == "-i")
+			{
+				channel_list[channel_index].send_message(pfds[index].fd, create_msg_2(index, "MODE " + array[1] + " " + array[2] + " " + array[3]), true);
+			}
+			else {
+				send_msg(pfds[index].fd, create_msg(index, "501", array[2] + " :Unknown MODE flag"));
+			}
 		}
 		else
 			send_msg(pfds[index].fd, create_msg(index, "421", array[0] + " :Unknown command"));
@@ -472,8 +490,18 @@ void Server::command_user(int index, std::vector<std::string> array)
 
 void Server::command_privmsg(int index, std::vector<std::string> array)
 {
-	if (array[1].substr(0, 1) == "#") // channel-user
+	
+	if (array[1].substr(0, 1) == "#") { // channel-user
+		int i = is_channel_active_v2(array[1]);
+		if (i == -1)
+			return ;
+		
+		if (!channel_list[i].user_exists_name(user_list[USER_ID].get_nick_name())){
+			return;
+		}
+
 		find_channel(array[1]).send_message(user_list[USER_ID], create_msg_2(index, array[0] + " " + array[1] + " " + array[2]), false);
+	}
 	else if (is_nickname_exist(array[1]) != -1) // user-user
 		user_to_user(index, array[0], array[1], array[2]);
 	else
@@ -519,26 +547,26 @@ void Server::command_topic(int index, std::vector<std::string> array)
 
 void Server::command_who(int index, std::vector<std::string> array)
 {
-	Channel channel = find_channel(array[1]);
-	std::vector<User> channels_user = channel.get_user_list();
+	int channel_index = is_channel_active_v2(array[1]);
+	if (channel_index == -1)
+		return;
+	
+	std::vector<User> channels_user = channel_list[channel_index].get_user_list();
 	for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it)
 	{
 		send_msg(pfds[index].fd, create_msg(index, "352", (*it).get_user_name() + " " + host_name + " " + host_name + " " + (*it).get_nick_name() + " H :0 " + (*it).get_real_name())); // H AND :0 could change
 	}
 	send_msg(pfds[index].fd, create_msg(index, "315", array[1] + " :End of WHO list"));
 
-  int channel_index = is_channel_active_v2(array[1]);
-	if (find_channel(array[1]).get_user_list().size() == 0)
-		channel_list.erase(channel_list.begin() + channel_index);
 }
 
 void Server::command_part(int index, std::vector<std::string> array)
 {
-	find_channel(array[1]).remove_from_channel(user_list[USER_ID]);
 	std::vector<User> channels_user = find_channel(array[1]).get_user_list();
 	for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it) {
 		send_msg((*it).get_fd(), create_msg_2(index, array[0] + " " + array[1] + " :" + user_list[USER_ID].get_nick_name()));
 	}
+	find_channel(array[1]).remove_from_channel(user_list[USER_ID]);
 
 	int channel_index = is_channel_active_v2(array[1]);
 	if (find_channel(array[1]).get_user_list().size() == 0)

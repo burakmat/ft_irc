@@ -46,7 +46,6 @@ class Server : public Socket
 		// USER/FD CREATE/DELETE
 		void delete_fd(int index);
 		void create_fd(int fd);
-		
 		void delete_user(int index);
 
 		//GETTERS and SETTERS
