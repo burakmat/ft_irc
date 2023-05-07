@@ -525,6 +525,8 @@ void Server::command_join(int index, std::vector<std::string> array)
 {
 	// 	[127.0.0.1:53658] -> b'JOIN #pass \r\n'
 	// [127.0.0.1:53658] <- b':osman 475 nick_osman #pass :Cannot join channel (+k) - bad key\r\n'
+	if (array[1][0] != '#')
+		array[1] = "#" + array[1];
 
 	int channel_index = is_channel_active(array[1], user_list[USER_ID].get_nick_name());
 	if (channel_list[channel_index].user_exists(user_list[USER_ID]))
