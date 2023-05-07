@@ -52,7 +52,6 @@ class Server : public Socket
 		std::string get_host_name();
 		void set_time();
 		void set_host_name();
-		void set_user(std::string user_name, std::string nick_name, std::string real_name, int index);
 		
 		// DEBUG
 		void print_info() const;

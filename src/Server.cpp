@@ -449,6 +449,10 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 						std::string message = array[i + 1].substr(1) + " :Erroneous Nickname";
 						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "432", message));
 						return 1;
+					} else if (is_nickname_exist(array[i + 1].substr(1)) != -1) {
+						std::string message = array[i + 1].substr(1) + " :Nickname is already in use";
+						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "433", message));
+						return 1;
 					}
 					// Should inform all channel members
 					for (std::vector<Channel>::iterator it = channel_list.begin(); it != channel_list.end(); ++it) {
@@ -473,6 +477,10 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 					if (i + 1 < array.size() && isdigit(array[i + 1][0])) {
 						std::string message = array[i + 1] + " :Erroneous Nickname";
 						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "432", message));
+						return 1;
+					} else if (is_nickname_exist(array[i + 1]) != -1) {
+						std::string message = array[i + 1] + " :Nickname is already in use";
+						send_msg(user_list[USER_ID].get_fd(), create_msg(user_list[USER_ID].get_fd(), "433", message));
 						return 1;
 					}
 					user_list[USER_ID].set_nick_name(array[i + 1]);
@@ -508,7 +516,6 @@ void Server::command_user(int index, std::vector<std::string> array)
 		// Waits for NICK or USER
 	}
 	else if (user_list[USER_ID].is_verified() && user_list[USER_ID].get_nick_name() != "" && user_list[USER_ID].get_real_name() != "" && user_list[USER_ID].get_user_name() != "") {
-		// set_user(array[1 + i], array[6 + i], array[4 + i].substr(1), index);
 		send_msg(pfds[index].fd, create_msg(index, "001", ":Hi, welcome to IRC"));
 		send_msg(pfds[index].fd, create_msg(index, "002", ":Your host is " + host_name + ", running version v1"));
 		send_msg(pfds[index].fd, create_msg(index, "003", ":This server was created " + created_time));
@@ -625,20 +632,7 @@ void Server::command_quit(int index)
 }
 
 // USER/FD CREATE/DELETE
-void Server::set_user(std::string user_name, std::string nick_name, std::string real_name, int index)
-{
 
-	if (is_nickname_exist(nick_name) == -1)
-	{
-		user_list[USER_ID].set_names(user_name, nick_name, real_name);
-		// User new_user(user_name, nick_name, real_name, fd);
-		// user_list.push_back(new_user);
-	}
-	else
-	{
-		// send error code
-	}
-}
 
 void Server::create_fd(int fd)
 {
