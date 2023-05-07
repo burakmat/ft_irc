@@ -138,6 +138,12 @@ void Server::getting_command(int index, std::string buffer)
 				return;
 			}
 
+			if (channel_list[channel_index].get_creator() == array[2])
+			{
+				send_msg(pfds[index].fd, create_msg(index, "423", ":You can not kick creator of channel"));
+				return;
+			}
+
 			std::vector<User> channels_user = find_channel(array[1]).get_user_list();
 			for (std::vector<User>::const_iterator it = channels_user.begin(); it != channels_user.end(); ++it)
 			{
