@@ -40,7 +40,8 @@ int main(int ac, char **av)
 					server.delete_user(i);
 					server.delete_fd(i);
 				} else {
-					std::cout  << "--------------------" << std::endl << "Client " << i << ": " << buffer << std::endl;
+					std::cout  << "--------------------" << std::endl << "Client " << i << ": '" << buffer << "'" << std::endl;
+
 					server.getting_command(i, buffer);
 				}
 

@@ -1,13 +1,16 @@
 #include "Server.hpp"
 
-Server::Server(int port, std::string _password) : Socket::Socket(port),
-																									password(_password)
+Server::Server(int port, std::string _password) 
+: Socket::Socket(port),
+password(_password)
 {
 	fail_check(bind(fd, (struct sockaddr *)&address, sizeof(address)));
 	fail_check(listen(fd, MAX_CLIENT));
 	create_fd(fd);
 	set_host_name();
 	set_time();
+	std::cout << "PASSWORD: '" + password + "'" << std::endl;
+	
 }
 
 Server::~Server() {}
@@ -26,6 +29,10 @@ void Server::getting_command(int index, std::string buffer)
 
 	std::vector<std::string> array;
 	array = parse(buffer);
+
+	if (array.size() == 0)
+		return ;
+	
 	int i = 0;
 
 	for (std::vector<std::string>::iterator it = array.begin(); it != array.end(); ++it)
@@ -258,9 +265,16 @@ std::vector<std::string> Server::parse(std::string input)
 	std::stringstream ss(input);
 	std::string temp = "";
 
+	ss >> temp;
+	if (temp == "") {
+		return result;
+	}
+	ss.str(input);
+	ss.clear();
+
 	while (getline(ss, temp))
 	{
-		vec.push_back(temp);
+			vec.push_back(temp);
 	}
 
 	ss.str(input);
@@ -292,9 +306,9 @@ std::vector<std::string> Server::parse(std::string input)
 		{
 			result.push_back(temp);
 		}
-		ss.str(input.substr(input.find_last_of(':')));
-		ss.clear();
-		ss >> temp;
+		temp = input.substr(input.find_last_of(':'), input.find_last_of('\r') - input.find_last_of(':'));
+
+		// std::cout << "temp: '" << temp + "'" << std::endl;
 		result.push_back(temp);
 	}
 	return result;
@@ -418,6 +432,11 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 {
 	unsigned long i = 0;
 	while (i < array.size()) {
+		if (array[i] == "PASS") {
+			
+	std::cout << "current password: '" << password << "', " << "given PASSWORD: '" + array[i + 1].substr(1) + "'" << std::endl;
+
+		}
 		if (array[i] == "PASS" && array[i + 1].substr(1) == password) {
 			user_list[USER_ID].set_verified(true);
 			i += 1;
