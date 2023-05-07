@@ -306,7 +306,13 @@ std::vector<std::string> Server::parse(std::string input)
 		{
 			result.push_back(temp);
 		}
-		temp = input.substr(input.find_last_of(':'), input.find_last_of('\r') - input.find_last_of(':'));
+		if (input.find_last_of('\r') != std::string::npos)
+			temp = input.substr(input.find_last_of(':'), input.find_last_of('\r') - input.find_last_of(':'));
+		else if (input.find_last_of('\n') != std::string::npos)
+			temp = input.substr(input.find_last_of(':'), input.find_last_of('\n') - input.find_last_of(':'));
+		else
+			temp = input.substr(input.find_last_of(':'));
+
 
 		// std::cout << "temp: '" << temp + "'" << std::endl;
 		result.push_back(temp);
@@ -512,7 +518,7 @@ void Server::command_user(int index, std::vector<std::string> array)
 		return ;
 	}
 
-	if (user_list[USER_ID].is_verified() && (user_list[USER_ID].get_nick_name() == "" || user_list[USER_ID].get_nick_name() == "")) {
+	if (user_list[USER_ID].is_verified() && (user_list[USER_ID].get_nick_name() == "" || user_list[USER_ID].get_user_name() == "")) {
 		// Waits for NICK or USER
 	}
 	else if (user_list[USER_ID].is_verified() && user_list[USER_ID].get_nick_name() != "" && user_list[USER_ID].get_real_name() != "" && user_list[USER_ID].get_user_name() != "") {

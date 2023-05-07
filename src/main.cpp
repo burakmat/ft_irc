@@ -19,7 +19,7 @@ int main(int ac, char **av)
 	{
 		// Third parameter (timeout) can be changed.
 
-		if (poll(&server.pfds[0], server.pfds.size(), 1000) == -1)
+		if (poll(&server.pfds[0], server.pfds.size(), 0) == -1)
 			exit(1);
 
 		if (server.pfds[0].revents & POLLIN) {
