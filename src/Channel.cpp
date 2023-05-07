@@ -183,10 +183,6 @@ bool Channel::user_exists_name(std::string name) const
 
 // Invite utils
 
-// void Channel::set_inv_only(bool inv_only)
-// {
-// 	invite = inv_only;
-// }
 
 bool Channel::is_inv_only()
 {

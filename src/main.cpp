@@ -17,8 +17,6 @@ int main(int ac, char **av)
 
 	while (1)
 	{
-		// Third parameter (timeout) can be changed.
-
 		if (poll(&server.pfds[0], server.pfds.size(), 0) == -1)
 			exit(1);
 

@@ -41,10 +41,9 @@ void Server::getting_command(int index, std::string buffer)
 		i++;
 	}
 
-	// if (array[0] == "USER")
 	if (array[0] == "PASS" || array[0] == "USER" || array[0] == "NICK")
 		command_user(index, array);
-	else if (user_list[USER_ID].is_verified())
+	else if (user_list[USER_ID].is_verified() && user_list[USER_ID].get_nick_name() != "" && user_list[USER_ID].get_user_name() != "")
 	{
 		if (array[0] == "PRIVMSG" || array[0] == "NOTICE")
 			command_privmsg(index, array);
@@ -313,8 +312,6 @@ std::vector<std::string> Server::parse(std::string input)
 		else
 			temp = input.substr(input.find_last_of(':'));
 
-
-		// std::cout << "temp: '" << temp + "'" << std::endl;
 		result.push_back(temp);
 	}
 	return result;
@@ -333,7 +330,7 @@ std::string Server::create_msg(int index, std::string code, std::string msg)
 }
 
 std::string Server::create_msg_2(int index, std::string msg)
-{ // index = sender
+{
 	return ":" + user_list[USER_ID].get_nick_name() + "!" + user_list[USER_ID].get_user_name() + "@" + host_name + " " + msg + "\r\n";
 }
 
@@ -509,10 +506,6 @@ int Server::read_init_command(std::vector<std::string> array, int index)
 // PRIVATE FUNCTIONS
 void Server::command_user(int index, std::vector<std::string> array)
 {
-	// std::cout << password << ": " << password.length() << ", " << array[1].substr(1) << ": " << array[1].substr(1).length() << std::endl;
-	// if (array[0] == "PASS" && array[1].substr(1) == password) {
-	// 	user_list[USER_ID].set_verified(true);
-	// }
 
 	if (read_init_command(array, index) == 1) {
 		return ;
@@ -555,8 +548,6 @@ void Server::command_privmsg(int index, std::vector<std::string> array)
 
 void Server::command_join(int index, std::vector<std::string> array)
 {
-	// 	[127.0.0.1:53658] -> b'JOIN #pass \r\n'
-	// [127.0.0.1:53658] <- b':osman 475 nick_osman #pass :Cannot join channel (+k) - bad key\r\n'
 	if (array[1][0] != '#')
 		array[1] = "#" + array[1];
 
@@ -575,11 +566,6 @@ void Server::command_join(int index, std::vector<std::string> array)
 		send_msg(pfds[index].fd, create_msg(index, "475", array[1] + " :Cannot join channel (+k) - bad key"));
 		return;
 	}
-	// if (channel_list[channel_index].is_exist_mode("+i") && !channel_list[channel_index].is_invited(user_list[USER_ID]))
-	// {
-	// 	send_msg(pfds[index].fd, create_msg(index, "473", array[1] + " :Cannot join channel (+i) - you must be invited"));
-	// 	return ;
-	// }
 
 	channel_list[channel_index].add_to_channel(user_list[USER_ID]);
 	send_msg(pfds[index].fd, create_msg_2(index, array[0] + " " + array[1]));
@@ -705,7 +691,6 @@ void Server::print_info() const
 	}
 }
 
-// debug
 void Server::print_channel_list() const
 {
 	int i = 0;
